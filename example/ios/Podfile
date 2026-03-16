@@ -4,6 +4,10 @@
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
+# uncomment this to not link with ogg, opus, vorbis and flac libraries
+# ENV['NO_OPUS_OGG_LIBS'] = '1'
+
+
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
