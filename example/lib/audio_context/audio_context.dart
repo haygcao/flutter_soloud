@@ -397,7 +397,7 @@ class SoLoudAudioHandler extends BaseAudioHandler with SeekHandler {
       // Get the actual sound duration for accurate metadata.
       final duration = soloud.getLength(sound!);
 
-      soundHandle = await soloud.play(sound!, looping: true);
+      soundHandle = soloud.play(sound!, looping: true);
 
       soloud.setGlobalVolume(1);
 

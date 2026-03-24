@@ -253,12 +253,12 @@ Future<StringBuffer> testProtectVoice() async {
 
   /// play 5 explosion
   for (var i = 0; i < 5; i++) {
-    await SoLoud.instance.play(explosion);
+    SoLoud.instance.play(explosion);
     await delay(100);
   }
 
   /// play 1 protected [song]
-  final songHandle = await SoLoud.instance.play(song);
+  final songHandle = SoLoud.instance.play(song);
   SoLoud.instance.setProtectVoice(songHandle, true);
   assert(
     SoLoud.instance.getProtectVoice(songHandle),
@@ -267,7 +267,7 @@ Future<StringBuffer> testProtectVoice() async {
 
   /// play 5 explosion
   for (var i = 0; i < 5; i++) {
-    await SoLoud.instance.play(explosion);
+    SoLoud.instance.play(explosion);
     await delay(100);
   }
 
@@ -329,10 +329,10 @@ Future<StringBuffer> testAllInstancesFinished() async {
     }),
   );
 
-  await SoLoud.instance.play(explosion, volume: 0.2);
-  final songHandle = await SoLoud.instance.play(song, volume: 0.6);
+  SoLoud.instance.play(explosion, volume: 0.2);
+  final songHandle = SoLoud.instance.play(song, volume: 0.6);
   await delay(500);
-  await SoLoud.instance.play(explosion, volume: 0.3);
+  SoLoud.instance.play(explosion, volume: 0.3);
 
   // Let the second explosion play for its full duration.
   await delay(4000);
@@ -366,32 +366,32 @@ Future<StringBuffer> testCreateNotes() async {
     'SoLoudTools.createNotes() failed!\n',
   );
 
-  await SoLoud.instance.play(notes1[5]);
-  await SoLoud.instance.play(notes2[0]);
+  SoLoud.instance.play(notes1[5]);
+  SoLoud.instance.play(notes2[0]);
   await delay(350);
   await SoLoud.instance.stop(notes1[5].handles.first);
   await SoLoud.instance.stop(notes2[0].handles.first);
 
-  await SoLoud.instance.play(notes1[6]);
-  await SoLoud.instance.play(notes2[1]);
+  SoLoud.instance.play(notes1[6]);
+  SoLoud.instance.play(notes2[1]);
   await delay(350);
   await SoLoud.instance.stop(notes1[6].handles.first);
   await SoLoud.instance.stop(notes2[1].handles.first);
 
-  await SoLoud.instance.play(notes1[4]);
-  await SoLoud.instance.play(notes1[11]);
+  SoLoud.instance.play(notes1[4]);
+  SoLoud.instance.play(notes1[11]);
   await delay(350);
   await SoLoud.instance.stop(notes1[4].handles.first);
   await SoLoud.instance.stop(notes1[11].handles.first);
 
-  await SoLoud.instance.play(notes1[4]);
-  await SoLoud.instance.play(notes0[9]);
+  SoLoud.instance.play(notes1[4]);
+  SoLoud.instance.play(notes0[9]);
   await delay(350);
   await SoLoud.instance.stop(notes1[4].handles.first);
   await SoLoud.instance.stop(notes0[9].handles.first);
 
-  await SoLoud.instance.play(notes1[8]);
-  await SoLoud.instance.play(notes1[1]);
+  SoLoud.instance.play(notes1[8]);
+  SoLoud.instance.play(notes1[1]);
   await delay(1500);
   await SoLoud.instance.stop(notes1[8].handles.first);
   await SoLoud.instance.stop(notes1[1].handles.first);
@@ -413,7 +413,7 @@ Future<StringBuffer> testPlaySeekPause() async {
 
   /// pause, seek test
   {
-    await SoLoud.instance.play(currentSound);
+    SoLoud.instance.play(currentSound);
     final length = SoLoud.instance.getLength(currentSound);
     assert(
       closeTo(length.inMilliseconds, 3773, 100),
@@ -443,7 +443,7 @@ Future<StringBuffer> testPan() async {
   final song =
       await SoLoud.instance.loadAsset('assets/audio/8_bit_mentality.mp3');
 
-  final handle = await SoLoud.instance.play(song, volume: 0.5);
+  final handle = SoLoud.instance.play(song, volume: 0.5);
 
   SoLoud.instance.setPan(handle, -0.8);
   var pan = SoLoud.instance.getPan(handle);
@@ -481,7 +481,7 @@ Future<StringBuffer> testHandles() async {
   });
 
   /// Play sample
-  await SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
   assert(
     currentSound.soundHash.isValid && currentSound.handles.length == 1,
     'play() failed!',
@@ -495,10 +495,10 @@ Future<StringBuffer> testHandles() async {
   );
 
   /// Play 4 sample
-  await SoLoud.instance.play(currentSound);
-  await SoLoud.instance.play(currentSound);
-  await SoLoud.instance.play(currentSound);
-  await SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
   assert(
     currentSound.handles.length == 4,
     'loadFromAssets() failed!',
@@ -550,7 +550,7 @@ Future<StringBuffer> testStopFutures() async {
       await SoLoud.instance.loadAsset('assets/audio/explosion.mp3');
 
   /// Fast call to `stop` after `play`
-  var handle = await SoLoud.instance.play(currentSound);
+  var handle = SoLoud.instance.play(currentSound);
   output
     ..writeln('fast play/stop')
     ..writeln('$handle started');
@@ -561,7 +561,7 @@ Future<StringBuffer> testStopFutures() async {
   await delay(500);
 
   /// Schedule a stop and call `stop` after the scheduled time
-  handle = await SoLoud.instance.play(currentSound);
+  handle = SoLoud.instance.play(currentSound);
   output
     ..writeln('\nscheduleStop')
     ..writeln('$handle started');
@@ -592,7 +592,7 @@ Future<StringBuffer> loopingTests() async {
   final currentSound =
       await SoLoud.instance.loadAsset('assets/audio/explosion.mp3');
 
-  await SoLoud.instance.play(
+  SoLoud.instance.play(
     currentSound,
     looping: true,
     loopingStartAt: const Duration(seconds: 1),
@@ -697,11 +697,11 @@ Future<StringBuffer> testSynchronousDeinit() async {
   final currentSound =
       await SoLoud.instance.loadAsset('assets/audio/explosion.mp3');
 
-  await SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
   await delay(100);
-  await SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
   await delay(100);
-  await SoLoud.instance.play(currentSound);
+  SoLoud.instance.play(currentSound);
 
   await delay(2000);
 
@@ -738,10 +738,10 @@ Future<StringBuffer> testVoiceGroups() async {
       await SoLoud.instance.loadAsset('assets/audio/explosion.mp3');
 
   /// Start playing sounds in pause state to get their handles.
-  final h1 = await SoLoud.instance.play(currentSound, paused: true);
-  final h2 = await SoLoud.instance.play(currentSound, paused: true);
-  final h3 = await SoLoud.instance.play(currentSound, paused: true);
-  final h4 = await SoLoud.instance.play(currentSound, paused: true);
+  final h1 = SoLoud.instance.play(currentSound, paused: true);
+  final h2 = SoLoud.instance.play(currentSound, paused: true);
+  final h3 = SoLoud.instance.play(currentSound, paused: true);
+  final h4 = SoLoud.instance.play(currentSound, paused: true);
 
   final group = SoLoud.instance.createVoiceGroup();
   assert(!group.isError, 'Failed to create voice group!');
@@ -802,7 +802,7 @@ Future<StringBuffer> testSoundFilters() async {
   filter.activate();
 
   /// Set a handle filter. It must be set before it starts playing.
-  final h1 = await SoLoud.instance.play(sound);
+  final h1 = SoLoud.instance.play(sound);
 
   /// Check if filter is active.
   assert(
@@ -837,7 +837,7 @@ Future<StringBuffer> testSoundFilters() async {
       ..writeln();
   }
 
-  await SoLoud.instance.play(sound);
+  SoLoud.instance.play(sound);
 
   /// Check if filter has been deactivated.
   assert(
@@ -872,7 +872,7 @@ Future<StringBuffer> testGlobalFilters() async {
   // ignore: cascade_invocations
   filter.activate();
 
-  await SoLoud.instance.play(sound);
+  SoLoud.instance.play(sound);
 
   /// Check if filter is active.
   assert(
@@ -957,9 +957,9 @@ Future<StringBuffer> testAutoDispose() async {
   });
 
   /// Play sample
-  await SoLoud.instance.play(sound);
+  SoLoud.instance.play(sound);
   await delay(300);
-  await SoLoud.instance.play(sound);
+  SoLoud.instance.play(sound);
 
   /// 3798ms explosion.mp3 sample duration
   await delay(5000);

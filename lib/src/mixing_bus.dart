@@ -154,8 +154,7 @@ class Bus {
   ///
   /// Throws [SoLoudBusDisposedDartException] if the bus has already
   /// been disposed.
-  // TODO(alnitak): make this sync
-  Future<SoundHandle> play(
+  SoundHandle play(
     AudioSource sound, {
     double volume = 1,
     double pan = 0,
@@ -187,8 +186,7 @@ class Bus {
   ///
   /// Throws [SoLoudBusDisposedDartException] if the bus has already
   /// been disposed.
-  // TODO(alnitak): make this sync
-  Future<SoundHandle> play3d(
+  SoundHandle play3d(
     AudioSource sound,
     double posX,
     double posY,
@@ -200,7 +198,7 @@ class Bus {
     bool paused = false,
     bool looping = false,
     Duration loopingStartAt = Duration.zero,
-  }) async {
+  }) {
     if (!_isValid) {
       _log.warning('bus $busId is already disposed');
       throw const SoLoudBusDisposedDartException();

@@ -1038,7 +1038,7 @@ abstract class FlutterSoLoud {
   /// or busGetApproximateVolume.
   ///
   /// [busId] the bus ID.
-  /// [enable] true to enable, false to disable.
+  /// enable true to enable, false to disable.
   // @mustBeOverridden
   // void busSetVisualizationEnable(int busId, bool enable);
 

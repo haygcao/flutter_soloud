@@ -184,7 +184,8 @@ class AudioSource {
   /// sound.autoDispose = true;
   /// 
   /// // or just
-  /// AudioSource sound = await SoLoud.instance.loadAsset(..., autoDispose: true);
+  /// AudioSource sound =
+  ///     await SoLoud.instance.loadAsset(..., autoDispose: true);
   /// ```
   bool autoDispose = false;
 

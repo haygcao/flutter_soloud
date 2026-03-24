@@ -16,7 +16,8 @@ import 'package:logging/logging.dart';
 ///    with a single call
 /// 3. **Apply shared effects**: Apply filters (like pitch shift, echo, etc.)
 ///    to all sounds routed through the bus
-/// 4. **Dynamic routing**: Move live sounds between buses using [Bus.annexSound]
+/// 4. **Dynamic routing**: Move live sounds between buses
+///    at runtime using [Bus.annexSound]
 ///
 /// ## Key Concepts
 ///
@@ -147,7 +148,7 @@ class _HelloFlutterSoLoudState extends State<HelloFlutterSoLoud> {
                   children: [
                     ElevatedButton(
                       onPressed: () async {
-                        await SoLoud.instance
+                        SoLoud.instance
                             .play(currentSound!, looping: true);
                       },
                       child: const Text('play sound on engine'),
@@ -299,7 +300,7 @@ class _BusControlsState extends State<BusControls> {
               // Route sounds through the bus.
               // By calling `play()` on the Bus instance itself, the audio
               // source is automatically routed through this mixing bus.
-              await widget.bus.play(background!, volume: 0.2);
+              widget.bus.play(background!, volume: 0.2);
               voiceCountNotifier.value = widget.bus.getActiveVoiceCount();
             },
             child: const Text('play background sound'),
@@ -307,7 +308,7 @@ class _BusControlsState extends State<BusControls> {
           ElevatedButton(
             onPressed: () async {
               if (explosion == null) return;
-              await widget.bus.play(explosion!);
+              widget.bus.play(explosion!);
               voiceCountNotifier.value = widget.bus.getActiveVoiceCount();
             },
             child: const Text('play explosion sound'),
@@ -315,7 +316,7 @@ class _BusControlsState extends State<BusControls> {
           ElevatedButton(
             onPressed: () async {
               if (iVeSeenThings == null) return;
-              await widget.bus.play(iVeSeenThings!);
+              widget.bus.play(iVeSeenThings!);
               voiceCountNotifier.value = widget.bus.getActiveVoiceCount();
             },
             child: const Text('play ive seen things sound'),

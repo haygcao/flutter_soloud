@@ -227,7 +227,7 @@ class _WebRadioExampleState extends State<WebRadioExample> {
       },
     );
 
-    await SoLoud.instance.play(source!);
+    SoLoud.instance.play(source!);
 
     unawaited(connectToUrl(url));
   }

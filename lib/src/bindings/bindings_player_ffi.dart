@@ -2173,7 +2173,7 @@ class FlutterSoLoudFfi extends FlutterSoLoud {
   /// or busGetApproximateVolume.
   ///
   /// [busId] the bus ID.
-  /// [enable] true to enable, false to disable.
+  /// enable true to enable, false to disable.
   // @override
   // void busSetVisualizationEnable(
   //   int busId,
@@ -2186,7 +2186,8 @@ class FlutterSoLoudFfi extends FlutterSoLoud {
   // }
 
   // late final _busSetVisualizationEnablePtr =
-  //     _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UnsignedInt, ffi.Bool)>>(
+  //     _lookup<ffi.NativeFunction<ffi.Void Function(ffi.UnsignedInt,
+  //        ffi.Bool)>>(
   //         'busSetVisualizationEnable');
   // late final _busSetVisualizationEnable =
   //     _busSetVisualizationEnablePtr.asFunction<void Function(int, bool)>();

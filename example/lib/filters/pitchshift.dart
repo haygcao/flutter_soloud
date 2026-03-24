@@ -98,7 +98,7 @@ class _PitchShiftState extends State<PitchShift> {
         }
 
         /// start playing.
-        soundHandle = await SoLoud.instance.play(sound!, looping: true);
+        soundHandle = SoLoud.instance.play(sound!, looping: true);
       });
     } catch (e) {
       debugPrint(e.toString());
@@ -458,7 +458,7 @@ class _PitchShiftState extends State<PitchShift> {
                             sound!.filters.pitchShiftFilter.activate();
 
                             /// start playing.
-                            soundHandle = await SoLoud.instance.play(
+                            soundHandle = SoLoud.instance.play(
                               sound!,
                               looping: true,
                             );

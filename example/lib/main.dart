@@ -87,7 +87,7 @@ class _HelloFlutterSoLoudState extends State<HelloFlutterSoLoud> {
 
                 /// Play it. The sound will be instantly available when it
                 /// needs to be played until it's disposed.
-                await soloud.play(currentSound!);
+                soloud.play(currentSound!);
               },
               child: const Text('play asset'),
             ),
