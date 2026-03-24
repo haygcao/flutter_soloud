@@ -2,24 +2,26 @@
 - added Mixing Bus feature and example https://docs.page/alnitak/flutter_soloud_docs~dev/advanced/mixing_bus
 - added `getApproximateVolume` to get the approximate volume of a channel of the player
 - added `autoDispose` parameter to `load*` methods to automatically dispose the sound when it is finished. This eliminates the need to manually call disposeSource
-- added `playSource` to play a source from assets, URLs, o file and automatically disposed when the source is finished
+- added `playSource` to play a source from assets, URLs, or file and automatically dispose its `AudioSource` when it is finished
 - added `filters/parametric_eq.dart` example
-- added parametric equalizer with 1 to 64 bands and FFT window size 32 to 4096 for quality and performance
+- added parametric equalizer with 1 to 64 bands and FFT window size from 32 to 4096 for quality and performance
 - added Swift Package Manager support
 - improved quality and performance of the pitchshift filter #313
 - CocoaPods now uses cmake to compile the plugin always in release mode for macOS and iOS
 - conditional import of `js` and `wasm` only on web (no more included on other platforms)
 - win fix: UTF8 file name conversion was causing crash or file not found #427
 - fixed a possible crash during app shutdown
-- possible fix for #333 which caused an ANR on Android when stopping/deinit
-- Linux feat: choose to link ogg, opus, vorbis, and flac libraries from the system with `TRY_SYSTEM_LIBS_FIRST=1` environment variable #421
+- possible fix for #333 which caused an ANR on Android when stopping/deinit or closing the app
+- Linux feat: choose to link ogg, opus, vorbis, and flac libraries from the system with `TRY_SYSTEM_LIBS_FIRST=1` environment variable #421. Useful for Rasperry Pi because the precompiled libs are available only for x86_64.
 - Android fix: elevate audio thread priority on Android #396. Thanks to @djkingCanada
 - Android: build optimizations
-- breaking change: bump Flutter version to 3.41.0 and Dart to 3.11.0
-- breaking change: play, play3d, speechText, are now sync
-- breaking change: renamed `NO_OPUS_OGG_LIBS` environment variable to `NO_XIPH_LIBS`
-- breaking change: renamed `SoLoudOpusOggVorbisLibsNotFoundCppException` to `SoLoudXiphLibsNotFoundCppException`
-- breaking change: renamed `areOpusOggLibsAvailable` to `areXiphLibsAvailable`
+---
+***breaking changes***
+- bump Flutter version to 3.41.0 and Dart to 3.11.0
+- play, play3d, speechText, are now sync
+- renamed `NO_OPUS_OGG_LIBS` environment variable to `NO_XIPH_LIBS`
+- renamed `SoLoudOpusOggVorbisLibsNotFoundCppException` to `SoLoudXiphLibsNotFoundCppException`
+- renamed `areOpusOggLibsAvailable` to `areXiphLibsAvailable`
 
 #### 3.5.3 (21 Mar 2026)
 - fix: compilation error on Windows #423
