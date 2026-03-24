@@ -9,6 +9,27 @@
 #include <cstring>
 #include <cmath>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+// Helper function to convert UTF-8 to wide string on Windows
+#ifdef _WIN32
+static wchar_t* utf8ToWide(const char* utf8Str)
+{
+    int wideLen = MultiByteToWideChar(CP_UTF8, 0, utf8Str, -1, NULL, 0);
+    if (wideLen == 0)
+        return NULL;
+    wchar_t* wideStr = new wchar_t[wideLen];
+    if (MultiByteToWideChar(CP_UTF8, 0, utf8Str, -1, wideStr, wideLen) == 0)
+    {
+        delete[] wideStr;
+        return NULL;
+    }
+    return wideStr;
+}
+#endif
+
 namespace Waveform
 {
     ReadSamplesErrors readSamplesFromDecoder(
@@ -107,7 +128,18 @@ namespace Waveform
         // Check if the file is an OGG file by reading the header
         if (filePath != NULL)
         {
-            FILE *file = fopen(filePath, "rb");
+            FILE *file = NULL;
+#ifdef _WIN32
+            // On Windows, convert UTF-8 to wide string and use _wfopen
+            wchar_t* wideName = utf8ToWide(filePath);
+            if (wideName)
+            {
+                file = _wfopen(wideName, L"rb");
+                delete[] wideName;
+            }
+#else
+            file = fopen(filePath, "rb");
+#endif
             if (file)
             {
                 unsigned char header[4];
@@ -140,9 +172,25 @@ namespace Waveform
         
         // Init the decoder with file or memory
         if (filePath != NULL)
+        {
+#ifdef _WIN32
+            // On Windows, use wide string version for UTF-8 support
+            wchar_t* wideName = utf8ToWide(filePath);
+            if (!wideName)
+            {
+                printf("Failed to convert filename to wide string.\n");
+                return noBackend;
+            }
+            result = ma_decoder_init_file_w(wideName, isOgg ? &decoderConfig : NULL, &decoder);
+            delete[] wideName;
+#else
             result = ma_decoder_init_file(filePath, isOgg ? &decoderConfig : NULL, &decoder);
+#endif
+        }
         else
+        {
             result = ma_decoder_init_memory(buffer, dataSize, isOgg ? &decoderConfig : NULL, &decoder);
+        }
 
         if (result != MA_SUCCESS)
         {
@@ -174,9 +222,25 @@ namespace Waveform
 
             // Re-init with updated config
             if (filePath != NULL)
+            {
+#ifdef _WIN32
+                // On Windows, use wide string version for UTF-8 support
+                wchar_t* wideName = utf8ToWide(filePath);
+                if (!wideName)
+                {
+                    printf("Failed to convert filename to wide string.\n");
+                    return noBackend;
+                }
+                result = ma_decoder_init_file_w(wideName, &decoderConfig, &decoder);
+                delete[] wideName;
+#else
                 result = ma_decoder_init_file(filePath, &decoderConfig, &decoder);
+#endif
+            }
             else
+            {
                 result = ma_decoder_init_memory(buffer, dataSize, &decoderConfig, &decoder);
+            }
 
             if (result != MA_SUCCESS)
             {

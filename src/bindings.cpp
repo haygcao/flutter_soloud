@@ -18,7 +18,6 @@
 #include <memory.h>
 #include <memory>
 #include <stdio.h>
-#include <filesystem>
 
 #ifdef __cplusplus
 extern "C" {
@@ -337,11 +336,10 @@ FFI_PLUGIN_EXPORT int isInited() {
     return;
   }
 
-        std::filesystem::path pa = std::filesystem::u8path(completeFileName);
         unsigned int hash = 0;
-        // std::thread loadThread([p, pa, completeFileName, loadIntoMem, hash]()
+        // std::thread loadThread([p, completeFileName, loadIntoMem, hash]()
         //                        {
-        PlayerErrors error = p->loadFile(pa.string(), loadIntoMem, (unsigned int *)&hash);
+        PlayerErrors error = p->loadFile(completeFileName, loadIntoMem, (unsigned int *)&hash);
         // platform_log("LOAD FILE FROM THREAD error: %d  hash: %u\n", error, hash);
         fileLoadedCallback(error, completeFileName, (unsigned int *)&hash, counter);
         // });
