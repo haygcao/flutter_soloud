@@ -47,7 +47,11 @@ Flutter audio plugin using SoLoud library and FFI
 
   # Flutter.framework does not contain a i386 slice.
   # pod_target_xcconfig: settings for the pod's own compilation target.
-  s.pod_target_xcconfig = { 
+  # NOTE: We use SDK-conditioned OTHER_LDFLAGS here (not vendored_libraries) because
+  # the Xiph libraries have separate -device and -simulator variants. vendored_libraries
+  # always injects the same -l flags regardless of SDK, which causes linker failures
+  # when building for simulator (it tries to link -device libs that lack simulator slices).
+  pod_xcconfig = { 
     'HEADER_SEARCH_PATHS' => [
       '$(PODS_TARGET_SRCROOT)/flutter_soloud/include',
       '$(PODS_TARGET_SRCROOT)/flutter_soloud/include/opus',
@@ -68,6 +72,14 @@ Flutter audio plugin using SoLoud library and FFI
     "CLANG_CXX_LIBRARY" => "libc++"
   }
 
+  # Add SDK-conditioned linker flags for Xiph libs to the pod's own target
+  if !disable_xiph_libs
+    pod_xcconfig['OTHER_LDFLAGS[sdk=iphoneos*]'] = '$(inherited) -logg_iOS-device -lopus_iOS-device -lvorbis_iOS-device -lvorbisfile_iOS-device -lFLAC_iOS-device'
+    pod_xcconfig['OTHER_LDFLAGS[sdk=iphonesimulator*]'] = '$(inherited) -logg_iOS-simulator -lopus_iOS-simulator -lvorbis_iOS-simulator -lvorbisfile_iOS-simulator -lFLAC_iOS-simulator'
+  end
+
+  s.pod_target_xcconfig = pod_xcconfig
+
   # user_target_xcconfig: settings propagated to the APP target's linker.
   # -force_load must be here because it's the app binary that needs the FFI symbols.
   # We use PODS_ROOT-based paths because PODS_TARGET_SRCROOT is not available
@@ -78,8 +90,8 @@ Flutter audio plugin using SoLoud library and FFI
     user_ldflags_device = force_load_lib
     user_ldflags_sim = force_load_lib
   else
-    user_ldflags_device = "#{force_load_lib} -L#{plugin_root}/flutter_soloud/libs -logg_iOS-device -lopus_iOS-device -lvorbis_iOS-device -lvorbisfile_iOS-device -lflac_iOS-device"
-    user_ldflags_sim = "#{force_load_lib} -L#{plugin_root}/flutter_soloud/libs -logg_iOS-simulator -lopus_iOS-simulator -lvorbis_iOS-simulator -lvorbisfile_iOS-simulator -lflac_iOS-simulator"
+    user_ldflags_device = "#{force_load_lib} -L#{plugin_root}/flutter_soloud/libs -logg_iOS-device -lopus_iOS-device -lvorbis_iOS-device -lvorbisfile_iOS-device -lFLAC_iOS-device"
+    user_ldflags_sim = "#{force_load_lib} -L#{plugin_root}/flutter_soloud/libs -logg_iOS-simulator -lopus_iOS-simulator -lvorbis_iOS-simulator -lvorbisfile_iOS-simulator -lFLAC_iOS-simulator"
   end
 
   s.user_target_xcconfig = {
@@ -88,15 +100,11 @@ Flutter audio plugin using SoLoud library and FFI
     'LIBRARY_SEARCH_PATHS' => "$(inherited) \"#{plugin_root}/cmake_build/$(PLATFORM_NAME)\" \"#{plugin_root}/flutter_soloud/libs\"",
   }
   
-  # Only include libraries if opus/ogg is enabled
+  # Do NOT use vendored_libraries for Xiph libs — it generates non-SDK-conditioned
+  # -l flags that always point to -device variants, breaking simulator builds.
+  # Instead, preserve_paths keeps the .a files from being stripped by CocoaPods,
+  # and the SDK-conditioned OTHER_LDFLAGS above handle linking.
   if !disable_xiph_libs
-    s.ios.vendored_libraries = [
-      'flutter_soloud/libs/libopus_iOS-device.a',
-      'flutter_soloud/libs/libogg_iOS-device.a',
-      'flutter_soloud/libs/libvorbis_iOS-device.a',
-      'flutter_soloud/libs/libvorbisfile_iOS-device.a',
-      'flutter_soloud/libs/libflac_iOS-device.a'
-    ]
     s.preserve_paths = [
       'flutter_soloud/libs/libopus_iOS-device.a',
       'flutter_soloud/libs/libogg_iOS-device.a',
@@ -106,8 +114,8 @@ Flutter audio plugin using SoLoud library and FFI
       'flutter_soloud/libs/libvorbis_iOS-simulator.a',
       'flutter_soloud/libs/libvorbisfile_iOS-device.a',
       'flutter_soloud/libs/libvorbisfile_iOS-simulator.a',
-      'flutter_soloud/libs/libflac_iOS-device.a',
-      'flutter_soloud/libs/libflac_iOS-simulator.a'
+      'flutter_soloud/libs/libFLAC_iOS-device.a',
+      'flutter_soloud/libs/libFLAC_iOS-simulator.a'
     ]
   end
 
