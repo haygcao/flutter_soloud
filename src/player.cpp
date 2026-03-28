@@ -1432,6 +1432,9 @@ unsigned int Player::busPlayOnEngine(unsigned int busId, float volume,
         return 0;
     SoLoud::handle handle = soloud.play(it->second.bus, volume, 0.0f, paused);
     it->second.handle = handle;
+    // Playing a sound inside a bus decreases the volume compared to playing it directly.
+    // https://github.com/jarikomppa/soloud/issues/395#issuecomment-4148675275
+    soloud.setPanAbsolute(handle, 1.0f, 1.0f);
     return handle;
 }
 
