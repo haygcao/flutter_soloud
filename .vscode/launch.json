@@ -102,6 +102,17 @@
             }
         },
         {
+            "name": "Debug native macOS test",
+            "preLaunchTask": "compile macos test debug",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/example/build/macos/Build/Products/Debug/flutter_soloud_example.app/Contents/MacOS/flutter_soloud_example",
+            "cwd": "${workspaceFolder}",
+            "sourceMap": {
+                "${workspaceFolder}/example/macos/Flutter/ephemeral/.symlinks/plugins/flutter_soloud": "${workspaceFolder}"
+            }
+        },
+        {
             "name": "Chrome wasm release",
             "type": "chrome",
             "preLaunchTask": "compile web wasm release",

@@ -6,6 +6,7 @@ import 'common.dart';
 
 /// Test setMaxActiveVoiceCount, setProtectedVoice and getProtectedVoice.
 Future<StringBuffer> testProtectVoice() async {
+  final strBuf = StringBuffer();
   await initialize();
   final defaultVoiceCount = SoLoud.instance.getMaxActiveVoiceCount();
 
@@ -48,6 +49,16 @@ Future<StringBuffer> testProtectVoice() async {
     'The protected song has been stopped!',
   );
 
+  // Test getVoiceCount (total voices allocated)
+  final voiceCount = SoLoud.instance.getVoiceCount();
+  strBuf.writeln('Total voice count: $voiceCount');
+  assert(voiceCount >= 6, 'Voice count should be at least 6');
+
+  // Test setInaudibleBehavior - positional args: handle, mustTick, kill
+  // This ensures voices continue to "tick" even when inaudible
+  SoLoud.instance.setInaudibleBehavior(songHandle, true, false);
+  strBuf.writeln('Set inaudible behavior for protected voice');
+
   deinit();
 
   /// Afer disposing the player and re-initializing, max active voices
@@ -59,5 +70,5 @@ Future<StringBuffer> testProtectVoice() async {
   );
   deinit();
 
-  return StringBuffer();
+  return strBuf;
 }

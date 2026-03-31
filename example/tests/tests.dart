@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_soloud/flutter_soloud.dart';
 
 import 'tests/all_tests.dart';
 
@@ -81,16 +82,37 @@ class _MyHomePageState extends State<MyHomePage> {
             _buildControls(),
             const SizedBox(height: 8),
             Expanded(
-              child: TextField(
-                controller: textEditingController,
-                style: const TextStyle(color: Colors.black, fontSize: 12),
-                expands: true,
-                maxLines: null,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  fillColor: Colors.white,
-                  filled: true,
-                ),
+              child: Stack(
+                children: [
+                  TextField(
+                    controller: textEditingController,
+                    style: const TextStyle(color: Colors.black, fontSize: 12),
+                    expands: true,
+                    maxLines: null,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      fillColor: Colors.white,
+                      filled: true,
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: ColoredBox(
+                        color: Colors.black26,
+                        child: IconButton(
+                          color: Colors.black,
+                          icon: const Icon(Icons.restore),
+                          onPressed: () {
+                            textEditingController.clear();
+                            output.clear();
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
@@ -234,6 +256,16 @@ class _MyHomePageState extends State<MyHomePage> {
     tests[index].status = TestStatus.running;
     if (mounted) setState(() {});
 
+    // Ensure clean state before running test
+    // (in case previous test didn't clean up properly)
+    try {
+      if (SoLoud.instance.isInitialized) {
+        SoLoud.instance.deinit();
+      }
+    } catch (_) {
+      // Ignore - may not be initialized
+    }
+
     await runZonedGuarded<Future<void>>(
       () async {
         final result = await tests[index].entry.run();
@@ -246,12 +278,14 @@ class _MyHomePageState extends State<MyHomePage> {
         _updateOutput();
       },
       (error, stack) {
-        // Attempt cleanup
+        // Ensure cleanup even if test failed
         try {
-          // deinit is imported via test files that use common.dart
-          // but it's not directly available here. The test itself should
-          // handle cleanup; we just report the failure.
-        } catch (_) {}
+          if (SoLoud.instance.isInitialized) {
+            SoLoud.instance.deinit();
+          }
+        } catch (_) {
+          // Ignore cleanup errors
+        }
 
         output
           ..write('== TEST "${tests[index].entry.name}" FAILED with '
@@ -293,9 +327,8 @@ class _StatusDot extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         shape: BoxShape.circle,
-        border: status == TestStatus.none
-            ? Border.all(color: Colors.grey)
-            : null,
+        border:
+            status == TestStatus.none ? Border.all(color: Colors.grey) : null,
       ),
     );
   }

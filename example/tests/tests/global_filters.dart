@@ -49,7 +49,26 @@ Future<StringBuffer> testGlobalFilters() async {
     time: const Duration(seconds: 2),
   );
 
-  await delay(6000);
+  await delay(2000);
+
+  /// Test fading filter parameter
+  strBuf.writeln('Fading global filter wet parameter to 0.5');
+  filter.wet.fadeFilterParameter(
+    to: 0.5,
+    time: const Duration(milliseconds: 500),
+  );
+
+  await delay(600);
+
+  /// Test oscillating filter parameter
+  strBuf.writeln('Oscillating global filter wet parameter');
+  filter.wet.oscillateFilterParameter(
+    from: 0.1,
+    to: 0.8,
+    time: const Duration(milliseconds: 800),
+  );
+
+  await delay(2000);
 
   /// Remove the filter
   try {

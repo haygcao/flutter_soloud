@@ -33,6 +33,11 @@
             "type": "shell"
         },
         {
+            "label": "compile macos test debug",
+            "command": "cd ${workspaceFolder}/example; flutter build macos -t tests/tests.dart --debug",
+            "type": "shell"
+        },
+        {
             "label": "compile web wasm release",
             "command": "cd ${workspaceFolder}/example; flutter run -d chrome --wasm --web-browser-flag '--disable-web-security' -t lib/mixing_bus/mixing_bus.dart --release",
             "type": "shell"

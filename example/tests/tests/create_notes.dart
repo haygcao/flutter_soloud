@@ -4,6 +4,7 @@ import 'common.dart';
 
 /// Test waveform.
 Future<StringBuffer> testCreateNotes() async {
+  final strBuf = StringBuffer();
   await initialize();
 
   final notes0 = await SoLoudTools.createNotes(
@@ -50,7 +51,36 @@ Future<StringBuffer> testCreateNotes() async {
   await SoLoud.instance.stop(notes1[8].handles.first);
   await SoLoud.instance.stop(notes1[1].handles.first);
 
+  /// Test direct loadWaveform with different types
+  strBuf.writeln('Testing direct loadWaveform calls');
+
+  for (final waveform in [WaveForm.sin, WaveForm.square, WaveForm.saw]) {
+    final waveSound = await SoLoud.instance.loadWaveform(
+      waveform,
+      false, // no super wave
+      1,
+      0,
+    );
+
+    // Set frequency before playing
+    SoLoud.instance.setWaveformFreq(waveSound, 440);
+
+    final waveHandle = SoLoud.instance.play(waveSound);
+    strBuf.writeln('Played ${waveform.name} waveform at 440Hz');
+
+    await delay(200);
+
+    // Change frequency during playback
+    SoLoud.instance.setWaveformFreq(waveSound, 880);
+    strBuf.writeln('Changed frequency to 880Hz');
+
+    await delay(200);
+
+    await SoLoud.instance.stop(waveHandle);
+    await SoLoud.instance.disposeSource(waveSound);
+  }
+
   deinit();
 
-  return StringBuffer();
+  return strBuf;
 }

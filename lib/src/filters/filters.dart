@@ -68,10 +68,10 @@ final class FiltersSingle {
   /// The class to get access to all the filters available to sounds.
   /// At least [soundHash] or [busId] must be provided.
   const FiltersSingle({this.soundHash, this.busId})
-      : assert(
-          soundHash != null || busId != null,
-          'At least soundHash or busId must be provided',
-        );
+    : assert(
+        soundHash != null || busId != null,
+        'At least soundHash or busId must be provided',
+      );
 
   /// The unique hash code of the sound.
   final SoundHash? soundHash;
@@ -213,7 +213,8 @@ final class FiltersSingle {
   ///
   /// This filter is not documented in the SoLoud C++ lib, the source code is
   /// [here](https://github.com/alnitak/flutter_soloud/blob/main/src/soloud/src/filter/parametric_eq.cpp)
-  ParametricEqSingle get parametricEq => ParametricEqSingle(soundHash, busId);
+  ParametricEqSingle get parametricEqFilter =>
+      ParametricEqSingle(soundHash, busId);
 }
 
 /// Filters instance used in [SoLoud.filters]. This differentiate from the
@@ -384,15 +385,16 @@ class FilterParam {
       throw const SoLoudFilterForSingleSoundOnWebDartException();
     }
     final ret = SoLoudController().soLoudFFI.getFilterParams(
-          handle: _soundHandle,
-          busId: _busId,
-          _type,
-          _attributeId,
-        );
+      handle: _soundHandle,
+      busId: _busId,
+      _type,
+      _attributeId,
+    );
 
     if (ret.error != PlayerErrors.noError) {
-      Logger('flutter_soloud.${_type.name}Filter')
-          .severe(() => 'get value: ${ret.error}');
+      Logger(
+        'flutter_soloud.${_type.name}Filter',
+      ).severe(() => 'get value: ${ret.error}');
       throw SoLoudCppException.fromPlayerError(ret.error);
     }
     return ret.value;
@@ -409,8 +411,9 @@ class FilterParam {
       throw const SoLoudFilterForSingleSoundOnWebDartException();
     }
     if (val < _min || val > _max) {
-      Logger('flutter_soloud.${_type.name}Filter')
-          .warning(() => 'value [$val] out of accepted range [$_min, $_max]');
+      Logger(
+        'flutter_soloud.${_type.name}Filter',
+      ).warning(() => 'value [$val] out of accepted range [$_min, $_max]');
       return;
     }
     // Check if the filter is the parametric EQ and if we are setting
@@ -419,7 +422,8 @@ class FilterParam {
         _attributeId == ParametricEqParam.stftWindowSize) {
       if (!_isPowerOfTwo(val.toInt()) || val < 32 || val > 4096) {
         Logger('flutter_soloud.${_type.name}Filter').warning(
-          () => 'value [$val] out of accepted range [32, 4096] or '
+          () =>
+              'value [$val] out of accepted range [32, 4096] or '
               'not a power of 2',
         );
         return;
@@ -427,15 +431,16 @@ class FilterParam {
     }
 
     final error = SoLoudController().soLoudFFI.setFilterParams(
-          handle: _soundHandle,
-          busId: _busId,
-          _type,
-          _attributeId,
-          val,
-        );
+      handle: _soundHandle,
+      busId: _busId,
+      _type,
+      _attributeId,
+      val,
+    );
     if (error != PlayerErrors.noError) {
-      Logger('flutter_soloud.${_type.name}Filter')
-          .severe(() => 'set value: $error');
+      Logger(
+        'flutter_soloud.${_type.name}Filter',
+      ).severe(() => 'set value: $error');
       throw SoLoudCppException.fromPlayerError(error);
     }
   }
@@ -444,10 +449,7 @@ class FilterParam {
   ///
   /// Throws [SoLoudFilterForSingleSoundOnWebDartException] if trying to use
   /// [FiltersSingle] on the Web platform.
-  void fadeFilterParameter({
-    required double to,
-    required Duration time,
-  }) =>
+  void fadeFilterParameter({required double to, required Duration time}) =>
       _type.fadeFilterParameter(_soundHandle, _busId, _attributeId, to, time);
 
   /// Oscillate a parameter value from [from] value to a new value [to]
@@ -459,15 +461,14 @@ class FilterParam {
     required double from,
     required double to,
     required Duration time,
-  }) =>
-      _type.oscillateFilterParameter(
-        _soundHandle,
-        _busId,
-        _attributeId,
-        from,
-        to,
-        time,
-      );
+  }) => _type.oscillateFilterParameter(
+    _soundHandle,
+    _busId,
+    _attributeId,
+    from,
+    to,
+    time,
+  );
 }
 
 /// The different types of audio filters.
@@ -513,37 +514,37 @@ enum FilterType {
 
   @override
   String toString() => switch (this) {
-        FilterType.biquadResonantFilter => 'Biquad Resonant',
-        FilterType.eqFilter => 'Equalizer',
-        FilterType.echoFilter => 'Echo',
-        FilterType.lofiFilter => 'Lofi',
-        FilterType.flangerFilter => 'Flanger',
-        FilterType.bassboostFilter => 'Bassboost',
-        FilterType.waveShaperFilter => 'Wave Shaper',
-        FilterType.robotizeFilter => 'Robotize',
-        FilterType.freeverbFilter => 'Freeverb',
-        FilterType.pitchShiftFilter => 'Pitchshift',
-        FilterType.limiterFilter => 'Limiter',
-        FilterType.compressorFilter => 'Compressor',
-        FilterType.parametricEq => 'Parametric EQ',
-      };
+    FilterType.biquadResonantFilter => 'Biquad Resonant',
+    FilterType.eqFilter => 'Equalizer',
+    FilterType.echoFilter => 'Echo',
+    FilterType.lofiFilter => 'Lofi',
+    FilterType.flangerFilter => 'Flanger',
+    FilterType.bassboostFilter => 'Bassboost',
+    FilterType.waveShaperFilter => 'Wave Shaper',
+    FilterType.robotizeFilter => 'Robotize',
+    FilterType.freeverbFilter => 'Freeverb',
+    FilterType.pitchShiftFilter => 'Pitchshift',
+    FilterType.limiterFilter => 'Limiter',
+    FilterType.compressorFilter => 'Compressor',
+    FilterType.parametricEq => 'Parametric EQ',
+  };
 
   /// The number of parameters this filter owns.
   int get numParameters => switch (this) {
-        FilterType.biquadResonantFilter => 4,
-        FilterType.eqFilter => 9,
-        FilterType.echoFilter => 4,
-        FilterType.lofiFilter => 3,
-        FilterType.flangerFilter => 3,
-        FilterType.bassboostFilter => 2,
-        FilterType.waveShaperFilter => 2,
-        FilterType.robotizeFilter => 3,
-        FilterType.freeverbFilter => 5,
-        FilterType.pitchShiftFilter => 3,
-        FilterType.limiterFilter => 5,
-        FilterType.compressorFilter => 8,
-        FilterType.parametricEq => 67,
-      };
+    FilterType.biquadResonantFilter => 4,
+    FilterType.eqFilter => 9,
+    FilterType.echoFilter => 4,
+    FilterType.lofiFilter => 3,
+    FilterType.flangerFilter => 3,
+    FilterType.bassboostFilter => 2,
+    FilterType.waveShaperFilter => 2,
+    FilterType.robotizeFilter => 3,
+    FilterType.freeverbFilter => 5,
+    FilterType.pitchShiftFilter => 3,
+    FilterType.limiterFilter => 5,
+    FilterType.compressorFilter => 8,
+    FilterType.parametricEq => 67,
+  };
 
   /// Activate this filter. If [soundHash] is null this filter is applied
   /// globally, else to the given [soundHash].
@@ -556,13 +557,14 @@ enum FilterType {
       throw const SoLoudFilterForSingleSoundOnWebDartException();
     }
     final error = SoLoudController().soLoudFFI.addFilter(
-          this,
-          soundHash: soundHash ?? const SoundHash.invalid(),
-          busId: busId,
-        );
+      this,
+      soundHash: soundHash ?? const SoundHash.invalid(),
+      busId: busId,
+    );
     if (error != PlayerErrors.noError) {
       Logger.root.severe(
-        () => '$name activate() '
+        () =>
+            '$name activate() '
             '${soundHash == null ? 'global ' : 'single '} filter: $error',
       );
       throw SoLoudCppException.fromPlayerError(error);
@@ -574,8 +576,7 @@ enum FilterType {
   /// Returns `-1` if the filter is not active. Otherwise, returns
   /// the index of the given filter.
   @internal
-  int isActive(SoundHash? soundHash, int? busId) => SoLoudController()
-      .soLoudFFI
+  int isActive(SoundHash? soundHash, int? busId) => SoLoudController().soLoudFFI
       .isFilterActive(this, soundHash: soundHash, busId: busId)
       .index;
 
@@ -590,16 +591,15 @@ enum FilterType {
       throw const SoLoudFilterForSingleSoundOnWebDartException();
     }
     final error = SoLoudController().soLoudFFI.removeFilter(
-          this,
-          soundHash: soundHash ?? const SoundHash.invalid(),
-          busId: busId ?? 0,
-        );
+      this,
+      soundHash: soundHash ?? const SoundHash.invalid(),
+      busId: busId ?? 0,
+    );
     if (error != PlayerErrors.noError) {
-      final scope =
-          soundHash == null ? (busId == null ? 'global ' : 'bus ') : 'single ';
-      Logger.root.severe(
-        () => '$name deactivate() $scope filter: $error',
-      );
+      final scope = soundHash == null
+          ? (busId == null ? 'global ' : 'bus ')
+          : 'single ';
+      Logger.root.severe(() => '$name deactivate() $scope filter: $error');
       throw SoLoudCppException.fromPlayerError(error);
     }
   }
@@ -625,13 +625,13 @@ enum FilterType {
       throw const SoLoudNotInitializedException();
     }
     final error = SoLoudController().soLoudFFI.fadeFilterParameter(
-          this,
-          attributeId,
-          to,
-          time.toDouble(),
-          handle: soundHandle,
-          busId: busId,
-        );
+      this,
+      attributeId,
+      to,
+      time.toDouble(),
+      handle: soundHandle,
+      busId: busId,
+    );
     if (error != PlayerErrors.noError) {
       Logger.root.severe(() => 'fadeFilterParameter(): $error');
       throw SoLoudCppException.fromPlayerError(error);
@@ -661,14 +661,14 @@ enum FilterType {
       throw const SoLoudNotInitializedException();
     }
     final error = SoLoudController().soLoudFFI.oscillateFilterParameter(
-          this,
-          attributeId,
-          from,
-          to,
-          time.toDouble(),
-          handle: soundHandle,
-          busId: busId,
-        );
+      this,
+      attributeId,
+      from,
+      to,
+      time.toDouble(),
+      handle: soundHandle,
+      busId: busId,
+    );
     if (error != PlayerErrors.noError) {
       Logger.root.severe(() => 'oscillateFilterParameter(): $error');
       throw SoLoudCppException.fromPlayerError(error);
