@@ -85,11 +85,12 @@ PlayerErrors Player::init(unsigned int sampleRate, unsigned int bufferSize, unsi
     void *playbackInfos_id = nullptr;
     if (deviceID != -1)
     {
-        // Calling this will init [pPlaybackInfos]
+        // Get the device list and find the requested device
         auto const devices = listPlaybackDevices();
         if (devices.size() == 0 || deviceID >= devices.size())
             return noPlaybackDevicesFound;
-        playbackInfos_id = &pPlaybackInfos[deviceID].id;
+        // Use the stored device ID from the PlaybackDevice struct
+        playbackInfos_id = (void *)&devices[deviceID].deviceId;
     }
 
     // initialize SoLoud.
@@ -119,13 +120,13 @@ PlayerErrors Player::changeDevice(int deviceID)
     if (!mInited)
         return backendNotInited;
 
-    void *playbackInfos_id = nullptr;
-
-    // Calling this will init [pPlaybackInfos]
+    // Get the device list and find the requested device
     auto const devices = listPlaybackDevices();
     if (devices.size() == 0 || deviceID >= devices.size())
         return noPlaybackDevicesFound;
-    playbackInfos_id = &pPlaybackInfos[deviceID].id;
+    
+    // Use the stored device ID from the PlaybackDevice struct
+    void *playbackInfos_id = (void *)&devices[deviceID].deviceId;
 
     SoLoud::result result = soloud.miniaudio_changeDevice(playbackInfos_id);
 
@@ -178,6 +179,7 @@ std::vector<PlaybackDevice> Player::listPlaybackDevices()
         cd.name = strdup(pPlaybackInfos[i].name);
         cd.isDefault = pPlaybackInfos[i].isDefault;
         cd.id = i;
+        cd.deviceId = pPlaybackInfos[i].id;  // Copy the device ID
         ret.push_back(cd);
     }
     // printf("***************** LIST DEVICES END\n");

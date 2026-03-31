@@ -25,6 +25,7 @@ struct PlaybackDevice {
   char *name;
   unsigned int isDefault;
   unsigned int id;
+  ma_device_id deviceId;  // Store the actual device ID, not just the index
 };
 
 class Player {

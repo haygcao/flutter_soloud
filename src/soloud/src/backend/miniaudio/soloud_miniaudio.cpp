@@ -444,7 +444,18 @@ namespace SoLoud
         if (soloud == nullptr)
             return UNKNOWN_ERROR;
 
+        // Stop the device before uninitializing to ensure clean shutdown
+        if (ma_device_get_state(&gDevice) == ma_device_state_started)
+        {
+            ma_device_stop(&gDevice);
+        }
+
+        // Lock the audio mutex to prevent race conditions during device change
+        soloud->lockAudioMutex_internal();
+
         ma_device_uninit(&gDevice);
+        gDeviceInitialized = false;
+
         ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
         deviceConfig.playback.pDeviceID = (ma_device_id *)pPlaybackInfos_id;
         deviceConfig.periodSizeInFrames = soloud->mBufferSize;
@@ -453,14 +464,29 @@ namespace SoLoud
         deviceConfig.sampleRate         = soloud->mSamplerate;
         deviceConfig.dataCallback       = soloud_miniaudio_audiomixer;
         deviceConfig.pUserData          = (void *)soloud;
-        if (ma_device_init(NULL, &deviceConfig, &gDevice) != MA_SUCCESS)
+        deviceConfig.notificationCallback = on_notification;
+
+        ma_result result;
+#if defined(MA_HAS_COREAUDIO) || defined(__ANDROID__)
+        // Use the existing context on CoreAudio (macOS/iOS) and Android
+        // to preserve session/category settings
+        result = ma_device_init(&context, &deviceConfig, &gDevice);
+#else
+        // On other platforms, use NULL context (default behavior)
+        result = ma_device_init(NULL, &deviceConfig, &gDevice);
+#endif
+        if (result != MA_SUCCESS)
         {
             gDeviceInitialized = false;
+            soloud->unlockAudioMutex_internal();
             return UNKNOWN_ERROR;
         }
+
         gDeviceInitialized = true;
         gDeviceStopped = false;  // Device is about to start
         ma_device_start(&gDevice);
+
+        soloud->unlockAudioMutex_internal();
         return 0;
     }
 };
