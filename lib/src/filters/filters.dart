@@ -8,7 +8,6 @@ import 'package:flutter_soloud/src/filters/bassboost_filter.dart';
 import 'package:flutter_soloud/src/filters/biquad_resonant_filter.dart';
 import 'package:flutter_soloud/src/filters/compressor.dart';
 import 'package:flutter_soloud/src/filters/echo_filter.dart';
-import 'package:flutter_soloud/src/filters/equalizer_filter.dart';
 import 'package:flutter_soloud/src/filters/flanger_filter.dart';
 import 'package:flutter_soloud/src/filters/freeverb_filter.dart';
 import 'package:flutter_soloud/src/filters/limiter.dart';
@@ -97,13 +96,6 @@ final class FiltersSingle {
   /// This filter is documented in the SoLoud C++ lib docs web page
   /// [here](https://solhsa.com/soloud/echofilter.html)
   EchoSingle get echoFilter => EchoSingle(soundHash, busId);
-
-  /// The `Equalizer` filter for this sound.
-  ///
-  /// This filter is not documented in the SoLoud C++ lib, the source code is
-  /// [here](https://github.com/alnitak/flutter_soloud/blob/main/src/soloud/src/filter/soloud_eqfilter.cpp)
-  @Deprecated('Use parametricEqFilter instead')
-  EqualizerSingle get equalizerFilter => EqualizerSingle(soundHash, busId);
 
   /// The `Flanger` filter for this sound.
   ///
@@ -241,13 +233,6 @@ final class FiltersGlobal {
   /// This filter is documented in the SoLoud C++ lib docs web page
   /// [here](https://solhsa.com/soloud/echofilter.html)
   EchoGlobal get echoFilter => const EchoGlobal();
-
-  /// The `Equalizer` filter used globally.
-  ///
-  /// This filter is not documented in the SoLoud C++ lib, the source code is
-  /// [here](https://github.com/alnitak/flutter_soloud/blob/main/src/soloud/src/filter/soloud_eqfilter.cpp)
-  @Deprecated('Use parametricEqFilter instead')
-  EqualizerGlobal get equalizerFilter => const EqualizerGlobal();
 
   /// The `Flanger` filter used globally.
   ///
@@ -476,9 +461,6 @@ enum FilterType {
   /// A biquad resonant filter.
   biquadResonantFilter,
 
-  /// An equalizer filter.
-  eqFilter,
-
   /// An echo filter.
   echoFilter,
 
@@ -515,7 +497,6 @@ enum FilterType {
   @override
   String toString() => switch (this) {
     FilterType.biquadResonantFilter => 'Biquad Resonant',
-    FilterType.eqFilter => 'Equalizer',
     FilterType.echoFilter => 'Echo',
     FilterType.lofiFilter => 'Lofi',
     FilterType.flangerFilter => 'Flanger',
@@ -532,7 +513,6 @@ enum FilterType {
   /// The number of parameters this filter owns.
   int get numParameters => switch (this) {
     FilterType.biquadResonantFilter => 4,
-    FilterType.eqFilter => 9,
     FilterType.echoFilter => 4,
     FilterType.lofiFilter => 3,
     FilterType.flangerFilter => 3,

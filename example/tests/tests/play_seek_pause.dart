@@ -58,7 +58,8 @@ Future<StringBuffer> testPlaySeekPause() async {
 
     /// Handle should be invalid after sound finishes
     assert(
-      currentSound.handles.isEmpty || !SoLoud.instance.getIsValidVoiceHandle(currentSound.handles.first),
+      currentSound.handles.isEmpty ||
+          !SoLoud.instance.getIsValidVoiceHandle(currentSound.handles.first),
       'Handle should be invalid after sound finishes',
     );
     strBuf.writeln('Handle correctly invalidated after playback end');

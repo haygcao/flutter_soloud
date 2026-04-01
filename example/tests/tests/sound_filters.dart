@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_int_literals
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_soloud/flutter_soloud.dart';
 

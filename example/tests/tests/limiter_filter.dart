@@ -28,7 +28,7 @@ Future<StringBuffer> testLimiterFilterSingle() async {
   strBuf.writeln('Limiter single filter activated');
 
   // Play the sound and get the handle
-  final handle = SoLoud.instance.play(sound, volume: 1);
+  final handle = SoLoud.instance.play(sound);
   strBuf.writeln('Playing sound with handle: $handle');
 
   // Set output ceiling (in dB, typically negative) using the handle
@@ -42,8 +42,8 @@ Future<StringBuffer> testLimiterFilterSingle() async {
 
   // Test multiple sounds with limiting
   final sound2 = await SoLoud.instance.loadAsset('assets/audio/tic-1.wav');
-  SoLoud.instance.play(sound, volume: 1);
-  SoLoud.instance.play(sound2, volume: 1);
+  SoLoud.instance.play(sound);
+  SoLoud.instance.play(sound2);
   strBuf.writeln('Playing multiple sounds with limiter active');
 
   await delay(1000);
@@ -99,9 +99,9 @@ Future<StringBuffer> testLimiterFilterGlobal() async {
   final sound1 = await SoLoud.instance.loadAsset('assets/audio/explosion.mp3');
   final sound2 = await SoLoud.instance.loadAsset('assets/audio/tic-1.wav');
 
-  SoLoud.instance.play(sound1, volume: 1);
-  SoLoud.instance.play(sound1, volume: 1);
-  SoLoud.instance.play(sound2, volume: 1);
+  SoLoud.instance.play(sound1);
+  SoLoud.instance.play(sound1);
+  SoLoud.instance.play(sound2);
   strBuf.writeln('Playing multiple sounds with global limiter active');
 
   await delay(1000);

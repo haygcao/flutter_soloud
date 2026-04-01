@@ -299,7 +299,8 @@ Future<StringBuffer> testMixingBus() async {
   final remainingBuses = Buses().buses.length;
   assert(
     remainingBuses == initialBusCount,
-    'All buses should be removed, expected $initialBusCount, got $remainingBuses',
+    'All buses should be removed, expected $initialBusCount, '
+    'got $remainingBuses',
   );
   strBuf.writeln('Remaining buses: $remainingBuses');
 

@@ -5,7 +5,8 @@ import 'package:flutter_soloud/flutter_soloud.dart';
 
 import 'common.dart';
 
-/// Extended buffer stream testing including reset, time consumed, and buffer size.
+/// Extended buffer stream testing including reset, time consumed,
+/// and buffer size.
 Future<StringBuffer> testBufferStreamExtended() async {
   final strBuf = StringBuffer();
   await initialize();
@@ -15,7 +16,6 @@ Future<StringBuffer> testBufferStreamExtended() async {
   final preservedStream = SoLoud.instance.setBufferStream(
     format: BufferType.f32le,
     bufferingTimeNeeds: 1,
-    bufferingType: BufferingType.preserved,
     maxBufferSizeBytes: 1024 * 1024 * 5, // 5MB
   );
 

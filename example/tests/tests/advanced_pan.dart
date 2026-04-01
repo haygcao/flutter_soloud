@@ -16,12 +16,12 @@ Future<StringBuffer> testAdvancedPan() async {
   strBuf.writeln('Testing setPanAbsolute');
 
   // Full left (left channel at 1.0, right at 0.0)
-  SoLoud.instance.setPanAbsolute(handle, 1.0, 0.0);
+  SoLoud.instance.setPanAbsolute(handle, 1, 0);
   strBuf.writeln('Set absolute pan: left=1.0, right=0.0 (full left)');
   await delay(400);
 
   // Full right (left channel at 0.0, right at 1.0)
-  SoLoud.instance.setPanAbsolute(handle, 0.0, 1.0);
+  SoLoud.instance.setPanAbsolute(handle, 0, 1);
   strBuf.writeln('Set absolute pan: left=0.0, right=1.0 (full right)');
   await delay(400);
 
@@ -31,7 +31,7 @@ Future<StringBuffer> testAdvancedPan() async {
   await delay(400);
 
   // Back to center using regular setPan
-  SoLoud.instance.setPan(handle, 0.0);
+  SoLoud.instance.setPan(handle, 0);
   strBuf.writeln('Reset to center using setPan(0.0)');
   await delay(200);
 
@@ -39,7 +39,7 @@ Future<StringBuffer> testAdvancedPan() async {
   strBuf.writeln('Testing fadePan from center to full left over 400ms');
   SoLoud.instance.fadePan(
     handle,
-    -1.0, // Full left
+    -1, // Full left
     const Duration(milliseconds: 400),
   );
 
@@ -48,22 +48,22 @@ Future<StringBuffer> testAdvancedPan() async {
 
   await delay(250);
   final pannedLeft = SoLoud.instance.getPan(handle);
-  strBuf.writeln('After fade to left, pan: $pannedLeft');
+  strBuf..writeln('After fade to left, pan: $pannedLeft')
 
   // Test fade to right
-  strBuf.writeln('Fading pan to full right over 400ms');
+  ..writeln('Fading pan to full right over 400ms');
   SoLoud.instance.fadePan(
     handle,
-    1.0, // Full right
+    1, // Full right
     const Duration(milliseconds: 400),
   );
 
   await delay(500);
   final pannedRight = SoLoud.instance.getPan(handle);
-  strBuf.writeln('After fade to right, pan: $pannedRight');
+  strBuf..writeln('After fade to right, pan: $pannedRight')
 
   // Test oscillatePan
-  strBuf.writeln('Testing oscillatePan between -0.8 and 0.8 over 800ms');
+  ..writeln('Testing oscillatePan between -0.8 and 0.8 over 800ms');
   SoLoud.instance.oscillatePan(
     handle,
     -0.8,

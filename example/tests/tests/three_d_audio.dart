@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:flutter_soloud/flutter_soloud.dart';
 
 import 'common.dart';
@@ -9,8 +11,7 @@ Future<StringBuffer> test3dAudio() async {
   await initialize();
 
   // Load a sound
-  final sound =
-      await SoLoud.instance.loadAsset('assets/audio/explosion.mp3');
+  final sound = await SoLoud.instance.loadAsset('assets/audio/explosion.mp3');
 
   // Play 3D sound at position (10, 0, 0) - positional args
   final handle = SoLoud.instance.play3d(
@@ -58,7 +59,8 @@ Future<StringBuffer> test3dAudio() async {
   strBuf.writeln('Set min/max distance to 1/100');
 
   // Test attenuation models
-  // 0 = NO_ATTENUATION, 1 = INVERSE_DISTANCE, 2 = LINEAR_DISTANCE, 3 = EXPONENTIAL
+  // 0 = NO_ATTENUATION, 1 = INVERSE_DISTANCE,
+  // 2 = LINEAR_DISTANCE, 3 = EXPONENTIAL
   SoLoud.instance.set3dSourceAttenuation(handle, 2, 1); // LINEAR_DISTANCE
   strBuf.writeln('Set attenuation to LINEAR_DISTANCE');
 
