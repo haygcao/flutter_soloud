@@ -46,7 +46,6 @@ class TestEntry {
 ///
 /// Add new tests here to make them available in the test runner UI.
 final List<TestEntry> allTests = [
-  // Phase 1: Core Functionality
   const TestEntry(
     name: '3dAudio',
     run: three_d_audio.test3dAudio,
@@ -68,7 +67,7 @@ final List<TestEntry> allTests = [
     run: speech_text.testSpeechText,
   ),
 
-  // Phase 2: Advanced Features - Filters (Single + Global)
+  // Filters (Single + Global)
   const TestEntry(
     name: 'EqualizerFilterSingle',
     run: equalizer_filter.testEqualizerFilterSingle,
@@ -102,7 +101,7 @@ final List<TestEntry> allTests = [
     run: limiter_filter.testLimiterFilterGlobal,
   ),
 
-  // Phase 2: Other Advanced Features
+  // Advanced Features
   const TestEntry(
     name: 'WaveformControls',
     run: waveform_controls.testWaveformControls,
@@ -119,8 +118,6 @@ final List<TestEntry> allTests = [
     name: 'MixingBus',
     run: mixing_bus.testMixingBus,
   ),
-
-  // Phase 3: Platform/Edge Cases
   const TestEntry(
     name: 'PlaybackDevices',
     run: playback_devices.testPlaybackDevices,
