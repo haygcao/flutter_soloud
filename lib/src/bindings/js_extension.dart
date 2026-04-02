@@ -286,7 +286,7 @@ external int wasmGetVoiceCount();
 @JS('Module_soloud._getProtectVoice')
 external int wasmGetProtectVoice(int handle);
 
-@JS('Module._setInaudibleBehavior')
+@JS('Module_soloud._setInaudibleBehavior')
 // ignore: avoid_positional_boolean_parameters
 external void wasmSetInaudibleBehavior(int handle, bool mustTick, bool kill);
 

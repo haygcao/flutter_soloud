@@ -17,6 +17,7 @@ Future<StringBuffer> testAsynchronousDeinit() async {
       SoLoud.instance.init().then(
         (_) {},
         onError: (Object e) {
+          deinit();
           if (e is SoLoudInitializationStoppedByDeinitException) {
             // This is to be expected.
             debugPrint('$e\n');
@@ -32,7 +33,7 @@ Future<StringBuffer> testAsynchronousDeinit() async {
 
     /// wait for [t] ms and deinit()
     await delay(t);
-    SoLoud.instance.deinit();
+    deinit();
     final after = SoLoudController().soLoudFFI.isInited();
 
     assert(

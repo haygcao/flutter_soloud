@@ -39,7 +39,7 @@
         },
         {
             "label": "compile web wasm release",
-            "command": "cd ${workspaceFolder}/example; flutter run -d chrome --wasm --web-browser-flag '--disable-web-security' -t lib/mixing_bus/mixing_bus.dart --release",
+            "command": "cd ${workspaceFolder}/example; flutter run -d chrome --wasm --web-browser-flag '--disable-web-security' -t tests/tests.dart --release",
             "type": "shell"
         },
         {

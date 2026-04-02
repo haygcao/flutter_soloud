@@ -1176,7 +1176,7 @@ void Player::debug()
 
 unsigned int Player::createVoiceGroup()
 {
-    auto ret = soloud.createVoiceGroup();
+    unsigned int ret = soloud.createVoiceGroup();
     return ret;
 }
 
