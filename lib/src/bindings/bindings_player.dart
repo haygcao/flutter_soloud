@@ -12,16 +12,11 @@ import 'package:flutter_soloud/src/sound_hash.dart';
 import 'package:meta/meta.dart';
 
 /// Callback set in `setBufferStream` for the `onBuffering` closure.
-typedef OnBufferingCallbackTFunction = void Function(
-  bool isBuffering,
-  int handle,
-  double time,
-);
+typedef OnBufferingCallbackTFunction =
+    void Function(bool isBuffering, int handle, double time);
 
 /// Callback set in `setBufferStream` for the `onMetadata` closure.
-typedef OnMetadataCallbackTFunction = void Function(
-  dynamic metadata,
-);
+typedef OnMetadataCallbackTFunction = void Function(dynamic metadata);
 
 /// Abstract class defining the interface for the platform-specific
 /// implementations.
@@ -68,7 +63,7 @@ abstract class FlutterSoLoud {
 
   /// Check if the libopus and libogg are available at build time.
   @mustBeOverridden
-  bool areOpusOggLibsAvailable();
+  bool areXiphLibsAvailable();
 
   /// Initialize the player. Must be called before any other player functions.
   ///
@@ -123,11 +118,7 @@ abstract class FlutterSoLoud {
   /// See the [seek] note problem when using [LoadMode] = `LoadMode.disk`.
   /// `soundHash` return hash of the sound.
   @mustBeOverridden
-  void loadFile(
-    String completeFileName,
-    LoadMode mode,
-    int counter,
-  );
+  void loadFile(String completeFileName, LoadMode mode, int counter);
 
   /// Load a new sound stored into [buffer] as file bytes to be played once
   /// or multiple times later.
@@ -194,10 +185,7 @@ abstract class FlutterSoLoud {
   /// [hash] the hash of the sound.
   /// [audioChunk] the audio data to add.
   @mustBeOverridden
-  PlayerErrors addAudioDataStream(
-    int hash,
-    Uint8List audioChunk,
-  );
+  PlayerErrors addAudioDataStream(int hash, Uint8List audioChunk);
 
   /// Set the end of the data stream.
   /// [hash] the hash of the stream sound.
@@ -309,6 +297,14 @@ abstract class FlutterSoLoud {
   @mustBeOverridden
   double getRelativePlaySpeed(SoundHandle handle);
 
+  /// Gets the approximate volume for output per output
+  /// channel (i.e, per speaker).
+  ///
+  /// [channel] the channel.
+  /// Return zero for invalid parameters.
+  @mustBeOverridden
+  double getApproximateVolume(int channel);
+
   /// Play already loaded sound identified by [soundHash].
   ///
   /// [soundHash] the unique sound hash of a sound.
@@ -324,6 +320,7 @@ abstract class FlutterSoLoud {
   @mustBeOverridden
   ({PlayerErrors error, SoundHandle newHandle}) play(
     SoundHash soundHash, {
+    int busId = 0,
     double volume = 1,
     double pan = 0,
     bool paused = false,
@@ -713,6 +710,7 @@ abstract class FlutterSoLoud {
     double to,
     double time, {
     SoundHandle? handle,
+    int? busId,
   });
 
   /// Oscillate a parameter of a filter.
@@ -733,6 +731,7 @@ abstract class FlutterSoLoud {
     double to,
     double time, {
     SoundHandle? handle,
+    int? busId,
   });
 
   // ///////////////////////////////////////
@@ -748,6 +747,7 @@ abstract class FlutterSoLoud {
   ({PlayerErrors error, int index}) isFilterActive(
     FilterType filterType, {
     SoundHash? soundHash,
+    int? busId,
   });
 
   /// Get parameters names of the given filter.
@@ -773,6 +773,7 @@ abstract class FlutterSoLoud {
   PlayerErrors addFilter(
     FilterType filterType, {
     SoundHash? soundHash,
+    int? busId,
   });
 
   /// Remove the filter [filterType].
@@ -783,6 +784,7 @@ abstract class FlutterSoLoud {
   PlayerErrors removeFilter(
     FilterType filterType, {
     SoundHash? soundHash,
+    int? busId,
   });
 
   /// Set the effect parameter with id [attributeId] of [filterType]
@@ -798,6 +800,7 @@ abstract class FlutterSoLoud {
     int attributeId,
     double value, {
     SoundHandle? handle,
+    int? busId,
   });
 
   /// Get the effect parameter value with id [attributeId] of [filterType].
@@ -811,6 +814,7 @@ abstract class FlutterSoLoud {
     FilterType filterType,
     int attributeId, {
     SoundHandle? handle,
+    int? busId,
   });
 
   // ///////////////////////////////////////
@@ -833,6 +837,7 @@ abstract class FlutterSoLoud {
     double posX,
     double posY,
     double posZ, {
+    int busId = 0,
     double velX = 0,
     double velY = 0,
     double velZ = 0,
@@ -975,6 +980,98 @@ abstract class FlutterSoLoud {
     double endTime = -1,
     bool average = false,
   });
+
+  /////////////////////////////////////////
+  /// Mixing Bus
+  /// https://solhsa.com/soloud/mixbus.html
+  /// https://solhsa.com/soloud/soloud_20200207.html#mixing-bus
+  /////////////////////////////////////////
+  ///
+  /// A mixing bus is a special audio source that plays other audio sources
+  /// through it. Useful for grouped volume control, per-bus filtering,
+  /// and per-bus visualization (FFT/wave). Busses can also be nested.
+  /// Only one instance of a bus can play at a time.
+  /// Busses are protected by default and marked as "must tick".
+  /////////////////////////////////////////
+
+  /// Create a new mixing bus.
+  /// Returns a unique bus ID (>0) to reference this bus in other calls.
+  @mustBeOverridden
+  int createBus();
+
+  /// Destroy a mixing bus by its ID.
+  /// Does not stop voices that were playing through the bus.
+  @mustBeOverridden
+  void destroyBus(int busId);
+
+  /// Play the bus itself on the main SoLoud engine so it becomes audible.
+  /// You must call this before sounds routed through the bus can be heard.
+  ///
+  /// [busId] the bus ID returned by createBus.
+  /// [volume] playback volume (1.0 = full).
+  /// [paused] whether to start paused.
+  /// Returns the voice handle for the bus, or 0 on error.
+  @mustBeOverridden
+  int busPlayOnEngine(int busId, double volume, bool paused);
+
+  /// Set the number of output channels for the bus (default is 2 = stereo).
+  ///
+  /// [busId] the bus ID.
+  /// [channels] number of channels (1 = mono, 2 = stereo (default), etc.).
+  @mustBeOverridden
+  void busSetChannels(int busId, int channels);
+
+  /// Enable or disable visualization data gathering for this bus.
+  /// Must be enabled before calling busCalcFFT, busGetWave,
+  /// or busGetApproximateVolume.
+  ///
+  /// [busId] the bus ID.
+  /// enable true to enable, false to disable.
+  // @mustBeOverridden
+  // void busSetVisualizationEnable(int busId, bool enable);
+
+  /// Calculate and return 256 floats of FFT data for this bus.
+  /// The data ranges from low to high frequencies.
+  /// Visualization must be enabled first with busSetVisualizationEnable.
+  ///
+  /// [busId] the bus ID.
+  /// Returns a pointer to 256 floats, or nullptr if the bus is not found.
+  // @mustBeOverridden
+  // ffi.Pointer<ffi.Float> busCalcFFT(int busId);
+
+  /// Get 256 samples of wave data currently playing through this bus.
+  /// Visualization must be enabled first with busSetVisualizationEnable.
+  ///
+  /// [busId] the bus ID.
+  /// Returns a pointer to 256 floats, or nullptr if the bus is not found.
+  // @mustBeOverridden
+  // ffi.Pointer<ffi.Float> busGetWave(int busId);
+
+  /// Get the approximate output volume for a specific channel of this bus.
+  /// Useful for VU meters or level indicators.
+  /// Visualization must be enabled first.
+  ///
+  /// [busId] the bus ID.
+  /// [channel] the output channel index (0 = left, 1 = right, etc.).
+  /// Returns the approximate volume, or 0 if the bus is not found.
+  @mustBeOverridden
+  double busGetApproximateVolume(int busId, int channel);
+
+  /// Move a live voice (identified by its handle) into this bus.
+  /// The voice will be reparented so it plays through the bus.
+  /// Useful for dynamically routing sounds in/out of filtered busses.
+  ///
+  /// [busId] the bus ID.
+  /// [voiceHandle] handle of the voice to annex.
+  @mustBeOverridden
+  void busAnnexSound(int busId, int voiceHandle);
+
+  /// Get the number of voices currently playing through this bus.
+  ///
+  /// [busId] the bus ID.
+  /// Returns the active voice count, or 0 if the bus is not found.
+  @mustBeOverridden
+  int busGetActiveVoiceCount(int busId);
 }
 
 /// Used for easier conversion from [double] to [Duration].

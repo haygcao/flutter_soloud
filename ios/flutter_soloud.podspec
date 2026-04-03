@@ -13,38 +13,59 @@ Flutter audio plugin using SoLoud library and FFI
   s.license          = { :file => '../LICENSE' }
   s.author           = { 'Your Company' => 'email@example.com' }
 
-  # This will ensure the source files in Classes/ are included in the native
-  # builds of apps using this FFI plugin. Podspec does not support relative
-  # paths, so Classes contains a forwarder C file that relatively imports
-  # `../src/*` so that the C sources can be shared among all target platforms.
   s.source           = { :path => '.' }
-  s.source_files = 'Classes/**/*'
+  s.source_files = 'flutter_soloud/Sources/flutter_soloud/*'
   s.dependency 'Flutter'
   s.platform = :ios, '13.0'
 
-  # Check if we should disable opus/ogg support (must exist and be '1')
-  disable_opus_ogg = !ENV['NO_OPUS_OGG_LIBS'].nil? && ENV['NO_OPUS_OGG_LIBS'] == '1'
+  # Check if we should disable Xiph libs support (must exist and be '1')
+  disable_xiph_libs = !ENV['NO_XIPH_LIBS'].nil? && ENV['NO_XIPH_LIBS'] == '1'
+
+  # Path to the plugin's source root from PODS_ROOT (available in app target context)
+  plugin_root = '${PODS_ROOT}/../.symlinks/plugins/flutter_soloud/ios'
 
   preprocessor_definitions = ['$(inherited)']
-  if disable_opus_ogg
-    preprocessor_definitions << 'NO_OPUS_OGG_LIBS'
+  if disable_xiph_libs
+    preprocessor_definitions << 'NO_XIPH_LIBS'
   end
+  preprocessor_definitions << 'SIGNALSMITH_USE_PFFFT'
 
-  s.compiler_flags = [
-    '-w',
-    '-DOS_OBJECT_USE_OBJC=0',
-    '-Wno-format',
-    '-lpthread',
-    '-lm'
-  ]
+  # Build the plugin's native code using CMake with release optimizations.
+  # CMake handles incremental builds internally — if no source files changed,
+  # this is a fast no-op.
+  build_script = <<-SCRIPT
+    # Build flutter_soloud with CMake
+    #{disable_xiph_libs ? 'export NO_XIPH_LIBS=1' : 'unset NO_XIPH_LIBS'}
+    bash "${PODS_TARGET_SRCROOT}/build_cmake.sh"
+    
+    # Warn about iOS 26.4+ debug mode requirements
+    if [ "${CONFIGURATION}" = "Debug" ] && [ "${PLATFORM_NAME}" = "iphoneos" ]; then
+      echo "⚠️  flutter_soloud: iOS 26.4+ Debug Mode Notice"
+      echo "    If you encounter EXC_BAD_ACCESS (code=50) crashes in debug mode on iOS 26.4+,"
+      echo "    please see https://docs.page/alnitak/flutter_soloud_docs/get_started/iOS_issue"
+      echo "    for more details."
+    fi
+  SCRIPT
+
+  s.script_phase = {
+    :name => 'Build flutter_soloud with CMake',
+    :script => build_script,
+    :execution_position => :before_compile,
+    :output_files => ['$(PODS_TARGET_SRCROOT)/cmake_build/$(PLATFORM_NAME)/libflutter_soloud_plugin.a'],
+  }
 
   # Flutter.framework does not contain a i386 slice.
-  s.pod_target_xcconfig = { 
+  # pod_target_xcconfig: settings for the pod's own compilation target.
+  # NOTE: We use SDK-conditioned OTHER_LDFLAGS here (not vendored_libraries) because
+  # the Xiph libraries have separate -device and -simulator variants. vendored_libraries
+  # always injects the same -l flags regardless of SDK, which causes linker failures
+  # when building for simulator (it tries to link -device libs that lack simulator slices).
+  pod_xcconfig = { 
     'HEADER_SEARCH_PATHS' => [
-      '$(PODS_TARGET_SRCROOT)/include',
-      '$(PODS_TARGET_SRCROOT)/include/opus',
-      '$(PODS_TARGET_SRCROOT)/include/ogg',
-      '$(PODS_TARGET_SRCROOT)/include/vorbis',
+      '$(PODS_TARGET_SRCROOT)/flutter_soloud/include',
+      '$(PODS_TARGET_SRCROOT)/flutter_soloud/include/opus',
+      '$(PODS_TARGET_SRCROOT)/flutter_soloud/include/ogg',
+      '$(PODS_TARGET_SRCROOT)/flutter_soloud/include/vorbis',
       '$(PODS_TARGET_SRCROOT)/../src',
       '$(PODS_TARGET_SRCROOT)/../src/soloud/include',
       '${PODS_ROOT}/abseil',
@@ -53,35 +74,60 @@ Flutter audio plugin using SoLoud library and FFI
     'DEFINES_MODULE' => 'YES', 
     'VALID_ARCHS' => 'arm64 x86_64',
     'LIBRARY_SEARCH_PATHS' => [
-      '$(PODS_TARGET_SRCROOT)/libs',
-      '$(SRCROOT)/libs'
+      '$(PODS_TARGET_SRCROOT)/cmake_build/$(PLATFORM_NAME)',
+      '$(PODS_TARGET_SRCROOT)/flutter_soloud/libs',
     ],
-    'OTHER_LDFLAGS[sdk=iphonesimulator*]' => disable_opus_ogg ? '' : '-logg_iOS-simulator -lopus_iOS-simulator -lvorbis_iOS-simulator -lvorbisfile_iOS-simulator -lflac_iOS-simulator',
-    'OTHER_LDFLAGS[sdk=iphoneos*]' => disable_opus_ogg ? '' : '-logg_iOS-device -lopus_iOS-device -lvorbis_iOS-device -lvorbisfile_iOS-device -lflac_iOS-device',
     "CLANG_CXX_LANGUAGE_STANDARD" => "c++17",
     "CLANG_CXX_LIBRARY" => "libc++"
   }
+
+  # Add SDK-conditioned linker flags for Xiph libs to the pod's own target
+  if !disable_xiph_libs
+    pod_xcconfig['OTHER_LDFLAGS[sdk=iphoneos*]'] = '$(inherited) -logg_iOS-device -lopus_iOS-device -lvorbis_iOS-device -lvorbisfile_iOS-device -lFLAC_iOS-device'
+    pod_xcconfig['OTHER_LDFLAGS[sdk=iphonesimulator*]'] = '$(inherited) -logg_iOS-simulator -lopus_iOS-simulator -lvorbis_iOS-simulator -lvorbisfile_iOS-simulator -lFLAC_iOS-simulator'
+  end
+
+  s.pod_target_xcconfig = pod_xcconfig
+
+  # user_target_xcconfig: settings propagated to the APP target's linker.
+  # -force_load must be here because it's the app binary that needs the FFI symbols.
+  # We use PODS_ROOT-based paths because PODS_TARGET_SRCROOT is not available
+  # in the app target's context.
+  force_load_lib = "-force_load #{plugin_root}/cmake_build/$(PLATFORM_NAME)/libflutter_soloud_plugin.a"
+
+  if disable_xiph_libs
+    user_ldflags_device = force_load_lib
+    user_ldflags_sim = force_load_lib
+  else
+    user_ldflags_device = "#{force_load_lib} -L#{plugin_root}/flutter_soloud/libs -logg_iOS-device -lopus_iOS-device -lvorbis_iOS-device -lvorbisfile_iOS-device -lFLAC_iOS-device"
+    user_ldflags_sim = "#{force_load_lib} -L#{plugin_root}/flutter_soloud/libs -logg_iOS-simulator -lopus_iOS-simulator -lvorbis_iOS-simulator -lvorbisfile_iOS-simulator -lFLAC_iOS-simulator"
+  end
+
+  s.user_target_xcconfig = {
+    'OTHER_LDFLAGS[sdk=iphoneos*]' => "$(inherited) #{user_ldflags_device}",
+    'OTHER_LDFLAGS[sdk=iphonesimulator*]' => "$(inherited) #{user_ldflags_sim}",
+    'LIBRARY_SEARCH_PATHS' => "$(inherited) \"#{plugin_root}/cmake_build/$(PLATFORM_NAME)\" \"#{plugin_root}/flutter_soloud/libs\"",
+    # Fix for FFI symbol stripping on iOS Release builds
+    'STRIP_STYLE' => 'debugging',
+    'DEBUG_INFORMATION_FORMAT' => 'dwarf-with-dsym',
+  }
   
-  # Only include libraries if opus/ogg is enabled
-  if !disable_opus_ogg
-    s.ios.vendored_libraries = [
-      'libs/libopus_iOS-device.a',
-      'libs/libogg_iOS-device.a',
-      'libs/libvorbis_iOS-device.a',
-      'libs/libvorbisfile_iOS-device.a',
-      'libs/libflac_iOS-device.a'
-    ]
+  # Do NOT use vendored_libraries for Xiph libs — it generates non-SDK-conditioned
+  # -l flags that always point to -device variants, breaking simulator builds.
+  # Instead, preserve_paths keeps the .a files from being stripped by CocoaPods,
+  # and the SDK-conditioned OTHER_LDFLAGS above handle linking.
+  if !disable_xiph_libs
     s.preserve_paths = [
-      'libs/libopus_iOS-device.a',
-      'libs/libogg_iOS-device.a',
-      'libs/libopus_iOS-simulator.a',
-      'libs/libogg_iOS-simulator.a',
-      'libs/libvorbis_iOS-device.a',
-      'libs/libvorbis_iOS-simulator.a',
-      'libs/libvorbisfile_iOS-device.a',
-      'libs/libvorbisfile_iOS-simulator.a',
-      'libs/libflac_iOS-device.a',
-      'libs/libflac_iOS-simulator.a'
+      'flutter_soloud/libs/libopus_iOS-device.a',
+      'flutter_soloud/libs/libogg_iOS-device.a',
+      'flutter_soloud/libs/libopus_iOS-simulator.a',
+      'flutter_soloud/libs/libogg_iOS-simulator.a',
+      'flutter_soloud/libs/libvorbis_iOS-device.a',
+      'flutter_soloud/libs/libvorbis_iOS-simulator.a',
+      'flutter_soloud/libs/libvorbisfile_iOS-device.a',
+      'flutter_soloud/libs/libvorbisfile_iOS-simulator.a',
+      'flutter_soloud/libs/libFLAC_iOS-device.a',
+      'flutter_soloud/libs/libFLAC_iOS-simulator.a'
     ]
   end
 

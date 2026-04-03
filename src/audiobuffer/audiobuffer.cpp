@@ -36,6 +36,12 @@ unsigned int BufferStreamInstance::getAudio(float *aBuffer,
                                             unsigned int aBufferSize) {
   std::lock_guard<std::mutex> lock(buffer_lock_mutex);
 
+  // Check if parent is still valid before accessing it
+  if (mParent == nullptr || !mParent->isValid()) {
+    memset(aBuffer, 0, sizeof(float) * aSamplesToRead);
+    return 0;
+  }
+
   // When using BufferType::AUTO, samplerate and channels are got from the
   // stream. Hence we need to update them regardless of how are set by
   // setBufferStream. But these parameters need to be set after the play
@@ -53,14 +59,7 @@ unsigned int BufferStreamInstance::getAudio(float *aBuffer,
     // Calculate mStreamPosition based on mOffset
     mStreamPosition = mOffset / (float)(mBaseSamplerate * mChannels);
 
-    // This is not nice to do in the audio callback, but I didn't
-    // find a better way to get lenght and pause the sound and the
-    // `checkBuffering` function is fast enough.
-    if (!mParent->mIsBuffering) {
-      mParent->mThePlayer->soloud.unlockAudioMutex_internal();
-      mParent->checkBuffering(0);
-      mParent->mThePlayer->soloud.lockAudioMutex_internal();
-    }
+    // The buffering state will be checked when addAudioDataStream() or setDataIsEnded() is called.
     return 0;
   }
 
@@ -75,14 +74,7 @@ unsigned int BufferStreamInstance::getAudio(float *aBuffer,
     // Calculate mStreamPosition based on mOffset
     mStreamPosition = mOffset / (float)(mBaseSamplerate * mChannels);
 
-    // This is not nice to do in the audio callback, but I didn't
-    // find a better way to get lenght and pause the sound and the
-    // `chakeBuffering` function is fast enough.
-    if (!mParent->mIsBuffering) {
-      mParent->mThePlayer->soloud.unlockAudioMutex_internal();
-      mParent->checkBuffering(0);
-      mParent->mThePlayer->soloud.lockAudioMutex_internal();
-    }
+    // The buffering state will be checked when addAudioDataStream() or setDataIsEnded() is called.
     return 0;
   }
 
@@ -139,6 +131,10 @@ result BufferStreamInstance::seek(double aSeconds, float *mScratch,
     rewind();
     return SO_NO_ERROR;
   }
+  // Check parent validity before accessing
+  if (mParent == nullptr || !mParent->isValid()) {
+    return INVALID_PARAMETER;
+  }
   if (mParent->mBuffer.bufferingType == BufferingType::RELEASED) {
     // Seeking not supported in RELEASED mode since data is discarded
     // TODO: Support seeking forward in RELEASED mode
@@ -174,6 +170,10 @@ result BufferStreamInstance::rewind() {
 }
 
 bool BufferStreamInstance::hasEnded() {
+  // Check parent validity before accessing
+  if (mParent == nullptr || !mParent->isValid()) {
+    return true;  // Parent destroyed or invalid, consider ended
+  }
   auto b = mParent->mBuffer.bufferingType == BufferingType::PRESERVED;
   // PRESERVED
   if (b && mParent->dataIsEnded && mOffset >= mParent->mSampleCount) {
@@ -193,7 +193,7 @@ bool BufferStreamInstance::hasEnded() {
 // //////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////
 
-BufferStream::BufferStream() {}
+BufferStream::BufferStream() : mIsDestroyed(false) {}
 
 BufferStream::~BufferStream() {
   // stop();
@@ -238,6 +238,7 @@ PlayerErrors BufferStream::setBufferStream(
   buffer = std::vector<unsigned char>();
   mBuffer.setBufferType(bufferingType);
   mIsBuffering = true;
+  mIsDestroyed = false;
   mIcyMetaInt =
       16000; // for mp3 streaming audio only. Most online streaming use 16000
 
@@ -245,7 +246,7 @@ PlayerErrors BufferStream::setBufferStream(
     streamDecoder = std::make_unique<StreamDecoder>();
   }
 
-#if defined(NO_OPUS_OGG_LIBS)
+#if defined(NO_XIPH_LIBS)
   if (pcmFormat.dataType == BufferType::OPUS) {
     return PlayerErrors::failedToCreateOpusDecoder;
   }
@@ -346,8 +347,8 @@ PlayerErrors BufferStream::addData(const void *aData, unsigned int aDataLen,
     switch (error) {
     case DecoderError::FormatNotSupported:
       return PlayerErrors::audioFormatNotSupported;
-    case DecoderError::NoOpusOggLibs:
-      return PlayerErrors::opusOggVorbisLibsNotFound;
+    case DecoderError::NoXiphLibs:
+      return PlayerErrors::xiphLibsNotFound;
     case DecoderError::FailedToCreateDecoder:
       return PlayerErrors::failedToCreateOpusDecoder;
     case DecoderError::ErrorReadingOggOpusPage:
@@ -490,6 +491,7 @@ void BufferStream::callOnBufferingCallback(bool isBuffering,
     // The `dartOnBufferingCallback_$hash` function is created in
     // `setBufferStream()` in `bindings_player_web.dart` and it's
     // meant to call the Dart callback passed to `setBufferStream()`.
+    // This event is used for this.
     EM_ASM(
         {
           // Compose the function name for this soundHash

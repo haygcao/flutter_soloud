@@ -24,6 +24,11 @@ distribution.
 #include <stdlib.h>
 
 #include "soloud.h"
+#include "soloud_internal.h"
+
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <unistd.h>
+#endif
 
 #if !defined(WITH_MINIAUDIO)
 
@@ -61,15 +66,22 @@ namespace SoLoud
 #include <android/api-level.h>
 #endif
 #include <math.h>
+#include <chrono>
 #include <thread>
 #include <mutex>
-#include <chrono>
+#if defined(_WIN32) || defined(_WIN64)
+#  include <windows.h>
+#else
+#  include <pthread.h>
+#  include <sys/resource.h>
+#endif
 
 namespace SoLoud
 {
     ma_device gDevice;
     SoLoud::Soloud *soloud;
     ma_context context;
+    volatile bool gDeviceStopped = true;  // Track device stopped state for proper cleanup
 
     // Forward declarations for functions used in on_notification
     result soloud_miniaudio_pause(SoLoud::Soloud *aSoloud);
@@ -99,11 +111,13 @@ namespace SoLoud
         {
             case ma_device_notification_type_started:
             {
+                gDeviceStopped = false;
                 if (soloud->_stateChangedCallback != nullptr) soloud->_stateChangedCallback(0);
             } break;
 
             case ma_device_notification_type_stopped:
             {
+                gDeviceStopped = true;
                 if (soloud->_stateChangedCallback != nullptr) soloud->_stateChangedCallback(1);
             } break;
 
@@ -140,6 +154,30 @@ namespace SoLoud
 
     void soloud_miniaudio_audiomixer(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount)
     {
+        static bool first_call = true;
+        if (first_call) {
+#ifdef __ANDROID__
+            int policy;
+            struct sched_param param;
+            if (pthread_getschedparam(pthread_self(), &policy, &param) == 0) {
+                // Attempt to elevate to Realtime FIFO
+                param.sched_priority = 1;
+                if (pthread_setschedparam(pthread_self(), SCHED_FIFO, &param) != 0) {
+                    if (pthread_setschedparam(pthread_self(), SCHED_RR, &param) != 0) {
+                        // If denied Realtime, check if we are stuck in SCHED_BATCH (3)
+                        // and try to escape to SCHED_OTHER (0)
+                        if (policy == 3) {
+                             param.sched_priority = 0;
+                             pthread_setschedparam(pthread_self(), 0, &param);
+                        }
+                    }
+                }
+                // Plus set highest niceness
+                setpriority(PRIO_PROCESS, 0, -20);
+            }
+#endif
+        }
+        first_call = false;
         SoLoud::Soloud *soloud = (SoLoud::Soloud *)pDevice->pUserData;
         soloud->mix((float *)pOutput, frameCount);
     }
@@ -159,9 +197,35 @@ namespace SoLoud
         
         if (gDeviceInitialized)
         {
+            // Check if device is already stopped before calling ma_device_stop()
+            // (which can cause an ANR on Android using OpenSSL #333).
+            // This should prevent ANR on Android where ma_device_stop() can block indefinitely
+            // if the device is in an unknown state
+            if (ma_device_get_state(&gDevice) != ma_device_state_stopped)
+            {
+                ma_device_stop(&gDevice);
+                
+                // Wait for device to actually stop before uninitializing
+                // Timeout after 500ms to prevent infinite blocking
+                int timeoutMs = 0;
+                int maxTimeoutMs = 500;
+                while (!gDeviceStopped && timeoutMs < maxTimeoutMs)
+                {
+                    // Small sleep to avoid busy-waiting
+#if defined(_WIN32) || defined(_WIN64)
+                    Sleep(1);
+#else
+                    usleep(1000);  // 1ms sleep
+#endif
+                    timeoutMs += 1;
+                }
+            }
+            
+            // Set flag to stopped in case notification wasn't received
+            gDeviceStopped = true;
+            
             // From miniaudio.h doc:
             // "This will explicitly stop the device. You do not need to call `ma_device_stop()` beforehand, but it's harmless if you do."
-            // But probably by adding the initialization thread, the call to ma_device_stop() was causing the #413 issue (hang on exit app).
             ma_device_uninit(&gDevice);
             gDeviceInitialized = false;
         }
@@ -380,7 +444,18 @@ namespace SoLoud
         if (soloud == nullptr)
             return UNKNOWN_ERROR;
 
+        // Stop the device before uninitializing to ensure clean shutdown
+        if (ma_device_get_state(&gDevice) == ma_device_state_started)
+        {
+            ma_device_stop(&gDevice);
+        }
+
+        // Lock the audio mutex to prevent race conditions during device change
+        soloud->lockAudioMutex_internal();
+
         ma_device_uninit(&gDevice);
+        gDeviceInitialized = false;
+
         ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
         deviceConfig.playback.pDeviceID = (ma_device_id *)pPlaybackInfos_id;
         deviceConfig.periodSizeInFrames = soloud->mBufferSize;
@@ -389,13 +464,29 @@ namespace SoLoud
         deviceConfig.sampleRate         = soloud->mSamplerate;
         deviceConfig.dataCallback       = soloud_miniaudio_audiomixer;
         deviceConfig.pUserData          = (void *)soloud;
-        if (ma_device_init(NULL, &deviceConfig, &gDevice) != MA_SUCCESS)
+        deviceConfig.notificationCallback = on_notification;
+
+        ma_result result;
+#if defined(MA_HAS_COREAUDIO) || defined(__ANDROID__)
+        // Use the existing context on CoreAudio (macOS/iOS) and Android
+        // to preserve session/category settings
+        result = ma_device_init(&context, &deviceConfig, &gDevice);
+#else
+        // On other platforms, use NULL context (default behavior)
+        result = ma_device_init(NULL, &deviceConfig, &gDevice);
+#endif
+        if (result != MA_SUCCESS)
         {
             gDeviceInitialized = false;
+            soloud->unlockAudioMutex_internal();
             return UNKNOWN_ERROR;
         }
+
         gDeviceInitialized = true;
+        gDeviceStopped = false;  // Device is about to start
         ma_device_start(&gDevice);
+
+        soloud->unlockAudioMutex_internal();
         return 0;
     }
 };
