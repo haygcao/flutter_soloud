@@ -1,4 +1,4 @@
-#### 4.0.0-pre.4 (XX Xxx 2026)
+#### 4.0.0 (3 Apr 2026)
 - fix: some OGG audio files don't trigger `SoundEventType.handleIsNoMoreValid`
 - fix: setBufferStream fails to decode small MP3 files under 32 KB #434. Thanks to @chaudharydeepanshu
 - fix web: `createVoiceGroup` return was interpred as a signed int instead of unsigned because it has always the sign bit flag
@@ -18,7 +18,7 @@
 - macOS fix: build error
 
 #### 4.0.0-pre.0 (24 Mar 2026)
-- added Mixing Bus feature and example https://docs.page/alnitak/flutter_soloud_docs~dev/advanced/mixing_bus
+- added Mixing Bus feature and example https://docs.page/alnitak/flutter_soloud_docs/advanced/mixing_bus
 - added `getApproximateVolume` to get the approximate volume of a channel of the player
 - added `autoDispose` parameter to `load*` methods to automatically dispose the sound when it is finished. This eliminates the need to manually call disposeSource
 - added `playSource` to play a source from assets, URLs, or file and automatically dispose its `AudioSource` when it is finished
