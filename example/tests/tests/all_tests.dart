@@ -3,6 +3,7 @@ import 'all_instances_finished.dart' as all_instances_finished;
 import 'async_multi_load.dart' as async_multi_load;
 import 'asynchronous_deinit.dart' as asynchronous_deinit;
 import 'auto_dispose.dart' as auto_dispose;
+import 'hot_restart_lifecycle.dart' as hot_restart_lifecycle;
 import 'buffer_stream_extended.dart' as buffer_stream_extended;
 import 'buffer_stream_small_mp3.dart' as buffer_stream_small_mp3;
 import 'compressor_filter.dart' as compressor_filter;
@@ -195,5 +196,9 @@ final List<TestEntry> allTests = [
   const TestEntry(
     name: 'BufferStreamSmallMp3',
     run: buffer_stream_small_mp3.testBufferStreamSmallMp3,
+  ),
+  const TestEntry(
+    name: 'HotRestartLifecycle',
+    run: hot_restart_lifecycle.testHotRestartLifecycle,
   ),
 ];
