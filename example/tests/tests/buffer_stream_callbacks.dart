@@ -17,9 +17,9 @@ Uint8List _generatePcmData({
   for (var i = 0; i < sampleCount; i++) {
     final sample =
         (sin(2 * pi * frequency * i / sampleRate) * 16000).toInt().clamp(
-          -32768,
-          32767,
-        );
+              -32768,
+              32767,
+            );
     bytes.setInt16(i * 2, sample, Endian.little);
   }
   return bytes.buffer.asUint8List();

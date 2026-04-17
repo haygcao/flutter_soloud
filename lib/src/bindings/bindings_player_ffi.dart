@@ -60,10 +60,7 @@ typedef DartdartStateChangedCallbackTFunction =
 typedef OnMetadataCallbackTFunction = void Function(NativeAudioMetadata);
 
 final class _BufferStreamNativeCallbacks {
-  _BufferStreamNativeCallbacks({
-    this.onBuffering,
-    this.onMetadata,
-  });
+  _BufferStreamNativeCallbacks({this.onBuffering, this.onMetadata});
 
   final ffi.NativeCallable<ffi.Void Function(ffi.Bool, ffi.Int, ffi.Double)>?
   onBuffering;
@@ -105,8 +102,8 @@ class FlutterSoLoudFfi extends FlutterSoLoud {
   ffi.NativeCallable<DartFileLoadedCallbackTFunction>? nativeFileLoadedCallable;
   ffi.NativeCallable<DartStateChangedCallbackTFunction>?
   nativeStateChangedCallable;
-  final Map<int, _BufferStreamNativeCallbacks>
-  _bufferStreamNativeCallables = {};
+  final Map<int, _BufferStreamNativeCallbacks> _bufferStreamNativeCallables =
+      {};
 
   void _disposeBufferStreamCallbacks(SoundHash soundHash) {
     _bufferStreamNativeCallables.remove(soundHash.hash)?.close();
