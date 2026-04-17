@@ -4,7 +4,6 @@ import 'async_multi_load.dart' as async_multi_load;
 import 'asynchronous_deinit.dart' as asynchronous_deinit;
 import 'auto_dispose.dart' as auto_dispose;
 import 'buffer_stream_callbacks.dart' as buffer_stream_callbacks;
-import 'hot_restart_lifecycle.dart' as hot_restart_lifecycle;
 import 'buffer_stream_extended.dart' as buffer_stream_extended;
 import 'buffer_stream_small_mp3.dart' as buffer_stream_small_mp3;
 import 'compressor_filter.dart' as compressor_filter;
@@ -12,6 +11,7 @@ import 'create_notes.dart' as create_notes;
 import 'equalizer_filter.dart' as equalizer_filter;
 import 'global_filters.dart' as global_filters;
 import 'handles.dart' as handles;
+import 'hot_restart_lifecycle.dart' as hot_restart_lifecycle;
 import 'limiter_filter.dart' as limiter_filter;
 import 'load_mem.dart' as load_mem;
 import 'looping.dart' as looping;
@@ -201,6 +201,8 @@ final List<TestEntry> allTests = [
   const TestEntry(
     name: 'BufferStreamCallbacks',
     run: buffer_stream_callbacks.testBufferStreamCallbacks,
+  ),
+  const TestEntry(
     name: 'HotRestartLifecycle',
     run: hot_restart_lifecycle.testHotRestartLifecycle,
   ),
