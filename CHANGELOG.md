@@ -1,6 +1,7 @@
 #### 4.0.3 (XX Xxx 2026)
 - fix: rebind Dart callbacks after hot restart #444. Thanks to @skylartaylor
 - fix: retain BufferStream callbacks until disposal #445. Thanks to @skylartaylor
+- fix web: small sound bleed after stop and play #446
 
 #### 4.0.2 (10 Apr 2026)
 - apple: fix building issue with XCode
