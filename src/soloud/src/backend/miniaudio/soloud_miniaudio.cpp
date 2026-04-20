@@ -107,6 +107,12 @@ namespace SoLoud
     {
         MA_ASSERT(pNotification != NULL);
 
+        // Guard against notifications delivered after deinitialization.
+        // The notifications may be pending on the main thread when the
+        // device is torn down.
+        if (soloud == nullptr)
+            return;
+
         switch (pNotification->type)
         {
             case ma_device_notification_type_started:
@@ -194,7 +200,13 @@ namespace SoLoud
             delete gInitThread;
             gInitThread = nullptr;
         }
-        
+
+        // Clear the global soloud pointer BEFORE uninitializing the device.
+        // This prevents any pending platform notifications (e.g. iOS route
+        // changes delivered on the main thread) from dereferencing a
+        // destroyed SoLoud instance through the on_notification callback.
+        soloud = nullptr;
+
         if (gDeviceInitialized)
         {
             // Check if device is already stopped before calling ma_device_stop()
@@ -242,9 +254,22 @@ namespace SoLoud
     {
         if (ma_device_get_state(&gDevice) == ma_device_state_started)
         {
+#if defined(__EMSCRIPTEN__)
+            /* On Web, don't suspend the AudioContext to avoid a bug where
+               ScriptProcessorNode's onaudioprocess can fire with stale data
+               after AudioContext.suspend() is called but before it takes effect.
+               When stop() and play() are called in quick succession, those stale
+               buffers get queued and play after resume(). Keeping the context
+               running is safe: soloud->mix() produces silence when no voices
+               are active, which has negligible overhead. 
+               This solves #446 */
+            (void)aSoloud;
+            return 0;
+#else
             ma_result res = ma_device_stop(&gDevice);
             if (res != MA_SUCCESS)
                 return UNKNOWN_ERROR;
+#endif
         }
         return 0;
     }
