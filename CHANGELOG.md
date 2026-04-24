@@ -1,8 +1,9 @@
-#### 4.0.3 (XX Xxx 2026)
+#### 4.0.3 (24 Apr 2026)
 - fix: rebind Dart callbacks after hot restart #444. Thanks to @skylartaylor
 - fix: retain BufferStream callbacks until disposal #445. Thanks to @skylartaylor
+- fix: removed the asserts in the init method #453
 - web fix: small sound bleed after stop and play #446
-- web fix: new way to load audio assets (loadAssets and loadMem) on web to solve UI freeze when loading
+- web fix: new way to load audio from memory (loadAssets and loadMem) on web to solve UI freeze when loading
 
 #### 4.0.2 (10 Apr 2026)
 - apple: fix building issue with XCode
